@@ -1,0 +1,29 @@
+# DATE: 28 December 2005 UNITS: metal CONTRIBUTOR: N. Juslin; P. Erhart; P. Träskelin; J. Nord; K. O. E. Henriksson; K. Nordlund; E. Salonen; K. Albe, DOI: 10.1063/1.2149492
+
+# Tersoff parameters for various elements and mixtures
+# multiple entries can be added to this file, LAMMPS reads the ones it needs
+# these entries are in LAMMPS "metal" units:
+#   A,B = eV; lambda1,lambda2,lambda3 = 1/Angstroms; R,D, ZBLcut = Angstroms; Z_i, Z_j = electron charge units
+#   other quantities are unitless
+#	These parameters are from Devanathan JNM 1998, adapted to fit the form used in LAMMPS (tersoff PRB 37 1988 instead of 1989 form)
+#	Z_i, Z_j are the charges of the i,j th nuclei from the coulomb potential
+#	ZBLcut is the ZBL cutoff parameter, ZBLexpscale is the scaling parameter in the exponential of the smoothing function
+
+# format of a single entry (one or more lines):
+#e1, e2, e3,  m,      gamma,      lambda3,       c,          d,   cos(theta0),  n,    beta,     lambda2,           B,            R,       D,       lambda1,           A,        Z_i, Z_j, ZBLcut, ZBLexpscale
+
+W   W   W    1.0    1.88227e-3    0.45876     2.14969    0.17126    0.277800    1.0    1.0    1.41124588922    306.499679742    3.50    0.30    2.71958372819     3401.47442414    74   74    1.30    12
+
+D	D   D    1.0    12.3300000    4.00000	  0.00000    1.00000    -1.00000    1.0    1.0    1.79563147290    31.3793415132    1.40    0.30    4.20752366731     80.0703477293    1    1     0.35    15
+
+W	D	D    1.0    5.40000e-3    0.00000     1.78800    0.82550    -0.38912    1.0    1.0    1.92766208367    384.872852445    2.15    0.20    2.40745717629     705.746415008    74   1     0.50    7
+
+D	W	W    1.0    5.40000e-3    0.00000     1.78800    0.82550    -0.38912    1.0    1.0    1.92766208367    384.872852445    2.15    0.20    2.40745717629     705.746415008    1    74    0.50    7
+
+W	W	D    1.0    5.40000e-3	  0.00000	  1.78800    0.82550    -0.38912    0.0    0.0    0.00000000000    0.00000000000    2.15    0.20    0.00000000000     0.00000000000    74   1     0.50    7
+
+D	D	W    1.0    5.40000e-3    0.00000     1.78800    0.82550    -0.38912    0.0    0.0    0.00000000000    0.00000000000    2.15    0.20    0.00000000000     0.00000000000    1    74    0.50    7
+
+D	W	D    1.0    12.3300000    0.00000	  0.00000    1.00000    -1.00000    0.0    0.0    0.00000000000    0.00000000000    1.40    0.30    0.00000000000     0.00000000000    1    1     0.35    15
+
+W	D	W    1.0    1.88227e-3	  0.45876     2.14969    0.17126    0.277800    0.0    0.0    0.00000000000    0.00000000000    3.50    0.30    0.00000000000     0.00000000000    74   74    1.30    12
