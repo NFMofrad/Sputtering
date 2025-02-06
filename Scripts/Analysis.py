@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import os
+import glob
 import csv
 import json
 import math
@@ -20,10 +21,11 @@ import warnings
     final_df = modified_df.groupby('Dump File').apply(process_molecule_target_2).reset_index(drop=True) """
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+# Planck's constant
 h_eV = 4.1357e-15     # Planck's constant (eV·s)
 hbar = 1.05457266e-34 # planck's constant/2pi (J.s)
 
-#  Vibrational frequency and bond length data from Tersoff potentials
+# Vibrational frequency and bond length data from Tersoff potentials
 vibrational_data = {
     ('Be', 'H'): {'Nu_e_it': 8.61964e13, 'r0_it': 1.3380, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144}, # Carolina's potential
     ('Be', 'D'): {'Nu_e_it': 6.39396e13, 'r0_it': 1.3380, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144}, # Carolina's potential
@@ -43,10 +45,10 @@ ion = input("Enter the ion element symbol (e.g., 'W'): ").strip().capitalize()
 try:
     mass_target = getattr(periodictable, target).mass
     mass_ion = getattr(periodictable, ion).mass
-    print(f"Mass of {target}: {mass_target} u")
-    print(f"Mass of {ion}: {mass_ion} u")
+    print(f"\n\033[32mMass of {target}: {mass_target} u\033[0m")
+    print(f"\033[32mMass of {ion}: {mass_ion} u\n\033[0m")
 except AttributeError:
-    print("One or both element symbols are invalid. Please check your input.")
+    print("\033[31m\nOne or both element symbols are invalid. Please check your input. u\033[0m")
     sys.exit(1)
 
 ### Get vibrational data
@@ -64,19 +66,18 @@ if data:
         Nu_e_tt, r0_tt = data['Nu_e_tt'], data['r0_tt']
         Nu_e_ii, r0_ii = data['Nu_e_ii'], data['r0_ii']
 
-    print(f"Vibrational data for {ion}->{target}:")
-    print(f"  Nu_e_it = {Nu_e_it:.5e} Hz, r0_it = {r0_it:.5e}")
-    print(f"  Nu_e_tt = {Nu_e_tt:.5e} Hz, r0_tt = {r0_tt:.5e}")
-    print(f"  Nu_e_ii = {Nu_e_ii:.5e} Hz, r0_ii = {r0_ii:.5e}")
+    print(f"\033[32mVibrational data for {ion}->{target}:\033[0m")
+    print(f"\033[32m  Nu_e_it = {Nu_e_it:.5e} Hz, r0_it = {r0_it:.5e}\033[0m")
+    print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.5e} Hz, r0_tt = {r0_tt:.5e}\033[0m")
+    print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.5e} Hz, r0_ii = {r0_ii:.5e}\033[0m")
 else:
     Nu_e_tt, r0_tt = 0, 0
     Nu_e_it, r0_it = 0, 0
     Nu_e_ii, r0_ii = 0, 0
-    print(f"No vibrational data found for {ion}->{target}:")
-    print(f"  Nu_e_it = {Nu_e_it:.1e} Hz, r0_it = {r0_it:.1e}")
-    print(f"  Nu_e_tt = {Nu_e_tt:.1e} Hz, r0_tt = {r0_tt:.1e}")
-    print(f"  Nu_e_ii = {Nu_e_ii:.1e} Hz, r0_ii = {r0_ii:.1e}")
-
+    print(f"\033[32mNo vibrational data found for {ion}->{target}:\033[0m")
+    print(f"\033[32m  Nu_e_it = {Nu_e_it:.1e} Hz, r0_it = {r0_it:.1e}\033[0m")
+    print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.1e} Hz, r0_tt = {r0_tt:.1e}\033[0m")
+    print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.1e} Hz, r0_ii = {r0_ii:.1e}\033[0m")
 
 
 # Initialize an empty dictionary to store directories
@@ -85,77 +86,75 @@ dirs = {}
 # Loop to allow user to input multiple directories
 while True:
     # Take directory name input
-    dir_name = input("Enter the directory name as temperature-impact angle (e.g., '300K-0deg') or type 'done' to finish: ").strip()
+    dir_name = input("\nEnter the directory name as temperature-impact angle (e.g., '300K-0deg') or type 'done' to finish: ").strip()
     
     # Break the loop if the user is done
     if dir_name.lower() == 'done':
         break
     
     # Take the corresponding path input
-    dir_path = input(f"Enter the path for {dir_name}: ").strip()
+    dir_path = input(f"\nEnter the path for {dir_name}: ").strip()
     
     # Store the directory in the dictionary
     dirs[dir_name] = dir_path
 
 # Print the directories to verify
-print("\nDirectories entered:")
+print("\n\033[32mDirectories entered:\033[0m")
 for dir_name, dir_path in dirs.items():
-    print(f"{dir_name}: {dir_path}")
+    print(f"\033[32m{dir_name}: {dir_path}\033[0m")
 
-print("\nRunning...")
+print("\033[32m\nRunning...\033[0m")
 
+# Creating the final json file for sputtering yield
 output_json = f'sputtering_yields_{ion}{target}.json'
 
-
-""" Function to count the physically sputtered atoms from the "sputtered.data" file """
-def count_physical(file_path):
-    count = 0
+""" Function to count the total and physically sputtered atoms from the "sputtered.data" file """
+def count_sputtered_atoms(file_path):
+    physical_count = total_count = 0
     with open(file_path, 'r') as file:
         for line in file:
-            if line.strip() and line.split()[-1] == '0':
-                count += 1
-    return count
-
-
-""" Function to count the total sputtered atoms from the "sputtered.data" file """
-def count_total(file_path):
-    count = 0
-    with open(file_path, 'r') as file:
-        for line in file:
-            if line.strip():
-                count += 1
-    return count
-
+            if line.strip():  # Skip empty lines
+                total_count += 1
+                if line.split()[-1] == '0':  # Check for physical sputtering
+                    physical_count += 1
+    return physical_count, total_count
 
 """ Function to get the number of impacts from the "event.csv" file """
 def count_impacts(file_path):
     with open(file_path, 'r') as file:
         return sum(1 for line in file)
 
-
 """Compute the number of sputtered atoms in a simulation"""
 def ingress_egress(fname):
-    rid = os.path.splitext(os.path.basename(fname))[0]
-    df = pd.read_csv(fname, header=0).set_index("time")
-    # Strip whitespace from column names
-    df.columns = df.columns.str.strip()
-    i1 = i2 = e1 = e2 = sputtered = 0
-    # "event" is boolean True if at any point count is 1
-    if event := df["c1"].any() or df["c2"].any():
-        # compute ingress/egress
-        diff1 = df["c1"].diff()
-        diff2 = df["c2"].diff()
-        # count ingress/egress
-        i1 = diff1.loc[diff1 > 0].sum().astype("int32")
-        i2 = diff2.loc[diff2 > 0].sum().astype("int32")
-        e1 = -diff1.loc[diff1 < 0].sum().astype("int32")
-        e2 = -diff2.loc[diff2 < 0].sum().astype("int32")
-        # no. of sputtered as minimum between ingress/egress counts
-        sputtered = min(i1, i2, e1, e2)
-    # Get the value of the "seed"
-    seed = df.iloc[-1,-1]
-    return rid, i1, i2, e1, e2, sputtered, event, seed
+    # Skip empty files
+    if os.path.getsize(fname) == 0:
+        print(f"Skipping empty file: {fname}")
+        return None
 
+    try:
+        rid = os.path.splitext(os.path.basename(fname))[0]
+        df = pd.read_csv(fname, header=0).set_index("time")
+        # Strip whitespace from column names
+        df.columns = df.columns.str.strip()
+        i1 = i2 = e1 = e2 = sputtered = 0
+        # "event" is boolean True if at any point count is 1
+        if event := df["c1"].any() or df["c2"].any():
+            # compute ingress/egress
+            diff1 = df["c1"].diff()
+            diff2 = df["c2"].diff()
+            # count ingress/egress
+            i1 = diff1.loc[diff1 > 0].sum().astype("int32")
+            i2 = diff2.loc[diff2 > 0].sum().astype("int32")
+            e1 = -diff1.loc[diff1 < 0].sum().astype("int32")
+            e2 = -diff2.loc[diff2 < 0].sum().astype("int32")
+            # no. of sputtered as minimum between ingress/egress counts
+            sputtered = min(i1, i2, e1, e2)
+        # Get the value of the "seed"
+        seed = df.iloc[-1, -1]
+        return rid, i1, i2, e1, e2, sputtered, event, seed
+    except Exception as e:
+        print(f"\033[31m\nSkipping file {fname}: {e}\n\033[0m")
+        return None
 
 """ Function to run ingress_egress for all simulations and generate the "event.csv" file """
 def run_ingress_egress(root_dir):
@@ -167,13 +166,11 @@ def run_ingress_egress(root_dir):
         results = []
         for i in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
             folder_path = os.path.join(root_dir, str(i))
-            file_path = os.path.join(folder_path, f"control.{i}.csv")
+            # Find all .csv files in the folder
+            csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
 
-            # Check if the folder exists and contains the file
-            if os.path.exists(folder_path) and os.path.isfile(file_path):
-                results.append(executor.submit(ingress_egress, file_path))
-            else:
-                file_path = os.path.join(folder_path, f"test.{i}.csv")
+            # Check if there are any .csv files and process them
+            for file_path in csv_files:
                 if os.path.exists(folder_path) and os.path.isfile(file_path):
                     results.append(executor.submit(ingress_egress, file_path))
 
@@ -181,20 +178,23 @@ def run_ingress_egress(root_dir):
     dfs = []
     for future in results:
         result = future.result()
-        columns = ["rid", "i1", "i2", "e1", "e2", "sputtered", "event", "seed"]
-        df = pd.DataFrame([result], columns=columns)
-        dfs.append(df)
+        if result:  # Skip None results
+            columns = ["rid", "i1", "i2", "e1", "e2", "sputtered", "event", "seed"]
+            df = pd.DataFrame([result], columns=columns)
+            dfs.append(df)
 
-    # Concatenate the DataFrames into a single DataFrame
-    final_df = pd.concat(dfs, ignore_index=True)
+    # Concatenate the DataFrames into a single DataFrame if there are results
+    if dfs:
+        final_df = pd.concat(dfs, ignore_index=True)
 
-    # Filter and write only rows with unique "seed" values
-    unique_seed_df = final_df.drop_duplicates(subset="seed")
+        # Filter and write only rows with unique "seed" values
+        unique_seed_df = final_df.drop_duplicates(subset="seed")
 
-    # Output results to a CSV file
-    output = os.path.join(root_dir, "event.csv")
-    unique_seed_df.to_csv(output, index=False)
-
+        # Output results to a CSV file
+        output = os.path.join(root_dir, "event.csv")
+        unique_seed_df.to_csv(output, index=False)
+    else:
+        print("No valid data to write to event.csv file.")
 
 """ Function to store all the properties of the sputtered target atoms, in "sputtered.data" file """
 def generate_sputtered_data(root_dir):
@@ -289,14 +289,12 @@ def generate_sputtered_data(root_dir):
                 
     return rids
 
-
 """ Function to calculate distance between two atoms """
 def calculate_distance(atom1, atom2):
     x1, y1, z1 = float(atom1['x']), float(atom1['y']), float(atom1['z'])
     x2, y2, z2 = float(atom2['x']), float(atom2['y']), float(atom2['z'])
     return math.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
-    
 """ Function to calculate velocity """
 def calculate_velocity(x1, y1, z1, t1, x2, y2, z2, t2):
     # Velocity formula: v = (s2 - s1) / (t2 - t1)
@@ -313,13 +311,11 @@ def calculate_velocity(x1, y1, z1, t1, x2, y2, z2, t2):
 
     return velocity_x, velocity_y, velocity_z, overall_velocity
 
-
 """ Function to calculate kinetic energy """
 def calculate_KE(m,v):
     ke = 1/2*((m*1.6605e-27)*(v*100)**2) # in J
     ke = ke * 6.242e+18 # in eV
     return ke
-
 
 """ Function to process each group of ID within a dump file to clean the polyatomic_target.csv file """
 def process_molecule_target_1(group):
@@ -342,7 +338,6 @@ def process_molecule_target_1(group):
         selected_rows = group[group['Time Step'].isin(repeated_time_steps)]
         
     return selected_rows
-
 
 """ Define a function to process each group of Dump File to clean the polyatomic_target.csv file """
 def process_molecule_target_2(group):
@@ -388,7 +383,6 @@ def process_molecule_target_2(group):
             selected_rows = group[group['Time Step'].isin(time_step_counts[time_step_counts == max_repeated_count].index)].head(a)
 
     return selected_rows
-
 
 """ Function to find the spettered molecules and single ions leaving the surface """
 def generate_molecule_data(root_dir):
@@ -529,8 +523,6 @@ def generate_molecule_data(root_dir):
                                     atom = {headers[i]: float(atom_data[i]) if i >= 3 and atom_data[i].replace('.', '').isdigit() else atom_data[i] for i in range(len(headers))}
                                     current_timestep['atoms'].append(atom)
 
-                            
-
                         # Append the last timestep
                         #if current_timestep is not None:
                         #    timestep_data.append(current_timestep)
@@ -645,7 +637,6 @@ def generate_molecule_data(root_dir):
                                                         str(target_atom2['vz'])
                                                     ])
 
-
                         # Process ion_molecules.csv for D2, H2, etc.
                         ion_timesteps = [timestep for timestep in timestep_data if any(atom['element'] == f'{ion}' for atom in timestep['atoms'])]
 
@@ -711,7 +702,6 @@ def generate_molecule_data(root_dir):
                                         ])
                             continue
     
-
     # Load the generated Molecule.csv file into a DataFrame
     molecule_df = pd.read_csv(output_molecule_target)
 
@@ -749,7 +739,6 @@ def generate_molecule_data(root_dir):
         polyatomic_df = pd.concat(polyatomic_target)
         polyatomic_df.to_csv(polyatomic_output, index=False)
 
-
     # Apply the processing function to each group of Dump File and save the final DataFrame to CSV
     modified_df_target = molecule_df.groupby('Dump File').apply(process_molecule_target_1).reset_index(drop=True)
     final_df_target = modified_df_target.groupby('Dump File').apply(process_molecule_target_2).reset_index(drop=True)
@@ -757,7 +746,6 @@ def generate_molecule_data(root_dir):
     
     # Read the modified CSV file into a DataFrame
     df_target = pd.read_csv(output_molecule_target)
-
 
     # Filter rows where there are two or more rows for the same target atom ID in a dump file
     filtered_df_target = df_target.groupby(['Dump File', f'ID_{target}']).filter(lambda x: len(x) >= 2)
@@ -845,7 +833,6 @@ def generate_molecule_data(root_dir):
     # Write the result to the output CSV file
     velocity_df_target.to_csv(output_molecule_target, index=False)
 
-
     if os.path.exists(diatomic_output):
         # Read the modified CSV file into a DataFrame
         df_target = pd.read_csv(diatomic_output)
@@ -914,7 +901,6 @@ def generate_molecule_data(root_dir):
                 # Reduced mass of the diatomic molecule in kg
                 mu = ((mass_target * mass_target) / (mass_target + mass_target)) * 1.6605e-27
 
-                
                 if r0_tt !=0:
                     # Compute the rotational quantum number J based on rotational kinetic energy
                     J_term = (2 * mu * (r0_tt * 1e-10)**2 * KE_rot) / (hbar**2 * 6.242e+18)
@@ -964,7 +950,6 @@ def generate_molecule_data(root_dir):
                                 COMy,
                                 COMz
                                 ])            
-
 
             else:
                 total_mass = mass_target + mass_ion
@@ -1099,10 +1084,6 @@ def generate_molecule_data(root_dir):
             # Save the result to a new CSV file
             rovib.reset_index().to_csv(final_rovib_data, index=False)
 
-
-    
-
-
     # Calculate center of mass for each unique combination of "Dump File" and f"ID_{ion}1"
     df_ion    = pd.read_csv(output_molecule_ion)
     ion_data = []
@@ -1211,7 +1192,6 @@ def generate_molecule_data(root_dir):
     # Write the result to the output CSV file
     com_df_ion.to_csv(output_molecule_ion, index=False)
 
-
 """ Function to calculate the type and number of sputtered species"""
 def sputtered_species(name, root_dir):
     
@@ -1231,7 +1211,6 @@ def sputtered_species(name, root_dir):
     # Initialize results list
     results1 = []
     results2 = []
-
     energiez = []
     
     if os.path.isdir(root_dir):
@@ -1287,7 +1266,6 @@ def sputtered_species(name, root_dir):
     # Save the results to a CSV file
     pivot1_df.to_csv(f'{ion}{target}_{name}_sputtered_species.csv', index=False)
 
-
 ################################################################################################################
 
 # Function to process each directory concurrently
@@ -1313,16 +1291,15 @@ def process_directory(name, dire, ion):
 
                 if os.path.exists(event_file):
                     if os.path.exists(sputtered_file):
-                        zeros_count = count_physical(sputtered_file)
-                        total_count = count_total(sputtered_file)
+                        physical_count, total_count = count_sputtered_atoms(sputtered_file)
                     else:
-                        zeros_count = 0
+                        physical_count = 0
                         total_count = 0
 
                     total_events = count_impacts(event_file) - 1
 
                     if total_events > 0:
-                        physical_yield = zeros_count / total_events
+                        physical_yield = physical_count / total_events
                         physical_error = math.sqrt(abs((physical_yield * (1 - physical_yield)) / total_events))
                         total_yield = total_count / total_events
                         total_error = math.sqrt(abs(total_yield * (1 - total_yield)) / total_events)
@@ -1350,7 +1327,6 @@ def process_directory(name, dire, ion):
     sputtered_species(name, dire)
 
     return name, results, energies
-
 
 # Main function to execute analysis in parallel
 def main():
@@ -1401,7 +1377,7 @@ def main():
     with open(output_json, 'w') as jsonfile:
         json.dump(data_for_json, jsonfile, indent=4)
 
-    print(f'Results saved to {output_json}')
+    print(f"\033[32mResults saved to {output_json}\033[0m")
 
 if __name__ == "__main__":
     main()
