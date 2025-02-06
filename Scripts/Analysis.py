@@ -49,7 +49,7 @@ except AttributeError:
     print("One or both element symbols are invalid. Please check your input.")
     sys.exit(1)
 
-# Get vibrational data
+### Get vibrational data
 key = (target, ion) if (target, ion) in vibrational_data else (ion, target)
 data = vibrational_data.get(key, None)
 
