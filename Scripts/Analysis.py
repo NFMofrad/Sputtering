@@ -86,7 +86,7 @@ dirs = {}
 # Loop to allow user to input multiple directories
 while True:
     # Take directory name input
-    dir_name = input("\nEnter the directory name as temperature-impact angle (e.g., '300K-0deg') or type 'done' to finish: ").strip()
+    dir_name = input("\nEnter the directory name (e.g., '300K-0deg') or type 'done' to start: ").strip()
     
     # Break the loop if the user is done
     if dir_name.lower() == 'done':
@@ -128,7 +128,7 @@ def count_impacts(file_path):
 def ingress_egress(fname):
     # Skip empty files
     if os.path.getsize(fname) == 0:
-        print(f"Skipping empty file: {fname}")
+        print(f"\033[31m\nSkipping empty file: {fname}\033[0m")
         return None
 
     try:
@@ -153,7 +153,7 @@ def ingress_egress(fname):
         seed = df.iloc[-1, -1]
         return rid, i1, i2, e1, e2, sputtered, event, seed
     except Exception as e:
-        print(f"\033[31m\nSkipping file {fname}: {e}\n\033[0m")
+        print(f"\033[31m\nSkipping file {fname}: {e}\033[0m")
         return None
 
 """ Function to run ingress_egress for all simulations and generate the "event.csv" file """
@@ -194,7 +194,8 @@ def run_ingress_egress(root_dir):
         output = os.path.join(root_dir, "event.csv")
         unique_seed_df.to_csv(output, index=False)
     else:
-        print("No valid data to write to event.csv file.")
+        print("\033[31m\nNo valid data to write to event.csv file.\033[0m")
+        sys.exit(1)
 
 """ Function to store all the properties of the sputtered target atoms, in "sputtered.data" file """
 def generate_sputtered_data(root_dir):
@@ -285,8 +286,7 @@ def generate_sputtered_data(root_dir):
             
                     with open(output, "a") as output_file:
                          output_file.writelines(output_lines)
-
-                
+               
     return rids
 
 """ Function to calculate distance between two atoms """
@@ -1377,7 +1377,7 @@ def main():
     with open(output_json, 'w') as jsonfile:
         json.dump(data_for_json, jsonfile, indent=4)
 
-    print(f"\033[32mResults saved to {output_json}\033[0m")
+    print(f"\033[32m\nResults saved to {output_json}\033[0m")
 
 if __name__ == "__main__":
     main()
