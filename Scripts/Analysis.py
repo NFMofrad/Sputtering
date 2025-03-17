@@ -714,7 +714,7 @@ def generate_molecule_data(root_dir):
 
     for (dump_file, molecule_id), group in grouped:
         # Check if 'ID_ion' is '-' for rows where we only have target2 molecules
-        if group[f'ID_{ion}'].str.startswith(target + ': ').iloc[0]:
+        if group[f'ID_{ion}'].astype(str).str.startswith(target + ': ').iloc[0]:
             # Count unique 'ID_W' for W2 molecules
             unique_target_count = group[f'ID_{target}'].nunique()
             if unique_target_count == 1:
@@ -844,7 +844,7 @@ def generate_molecule_data(root_dir):
             target_id = [row[f'ID_{target}']]
             ion_id = [row[f'ID_{ion}']]
             
-            if ion_id[0].startswith(target + ': '):
+            if str(ion_id[0]).startswith(target + ': '):
                 # Compute the total mass of the system
                 total_mass = mass_target * 2
 
