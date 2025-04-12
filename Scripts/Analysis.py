@@ -24,17 +24,18 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Planck's constant
 h_eV = 4.1357e-15     # Planck's constant (eV·s)
 hbar = 1.05457266e-34 # planck's constant/2pi (J.s)
+h_bar = hbar * 6.022e34 # planck's constant/2pi (amu.Å^2.ps^-1)
 
 # Vibrational frequency and bond length data from Tersoff potentials
 vibrational_data = {
-    ('Be', 'H'): {'Nu_e_it': 8.61964e13, 'r0_it': 1.3380, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144}, # Carolina's potential
-    ('Be', 'D'): {'Nu_e_it': 6.39396e13, 'r0_it': 1.3380, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144}, # Carolina's potential
-    ('Be', 'T'): {'Nu_e_it': 5.45722e13, 'r0_it': 1.3380, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144}, # Carolina's potential
-    ('B', 'W') : {'Nu_e_it': 3.20960e13, 'r0_it': 1.4707, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.56530, 'Nu_e_ii': 6.02760e12, 'r0_ii': 2.06120}, # Antoine's potential
-    ('B', 'Ar'): {'Nu_e_it': 0.00000000, 'r0_it': 0.0000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.56530, 'Nu_e_ii': 0.00000000, 'r0_ii': 0.00000}, # Antoine's potential
-    ('W', 'H') : {'Nu_e_it': 5.58144e13, 'r0_it': 1.7270, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144}, # Juslin's potential
-    ('W', 'D') : {'Nu_e_it': 3.95741e13, 'r0_it': 1.7270, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144}, # Juslin's potential
-    ('W', 'T') : {'Nu_e_it': 3.24259e13, 'r0_it': 1.7270, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144}, # Juslin's potential
+    ('Be', 'H'): {'Nu_e_it': 8.61964e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
+    ('Be', 'D'): {'Nu_e_it': 6.39396e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
+    ('Be', 'T'): {'Nu_e_it': 5.45722e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
+    #('B', 'W') : {'Nu_e_it': 3.20960e13, 'r0_it': 1.4707, 'D0_it': 0.000000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.56530, 'D0_tt': 0.00000, 'Nu_e_ii': 6.02760e12, 'r0_ii': 2.06120, 'D0_ii': 0.0000}, # Antoine's potential
+    #('B', 'Ar'): {'Nu_e_it': 0.00000000, 'r0_it': 0.0000, 'D0_it': 0.000000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.56530, 'D0_tt': 0.00000, 'Nu_e_ii': 0.00000000, 'r0_ii': 0.00000, 'D0_ii': 0.0000}, # Antoine's potential
+    ('W', 'H') : {'Nu_e_it': 5.58144e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
+    ('W', 'D') : {'Nu_e_it': 3.95741e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
+    ('W', 'T') : {'Nu_e_it': 3.24259e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
 }
 
 # Take target and ion as input, capitalize for consistency
@@ -58,18 +59,18 @@ data = vibrational_data.get(key, None)
 if data:
     # Swap the values dynamically if the key order is reversed
     if key != (target, ion):
-        Nu_e_tt, r0_tt = data['Nu_e_ii'], data['r0_ii']
-        Nu_e_it, r0_it = data['Nu_e_it'], data['r0_it']
-        Nu_e_ii, r0_ii = data['Nu_e_tt'], data['r0_tt']
+        Nu_e_tt, r0_tt, D0_tt = data['Nu_e_ii'], data['r0_ii'], data['D0_ii']
+        Nu_e_it, r0_it, D0_it = data['Nu_e_it'], data['r0_it'], data['D0_it']
+        Nu_e_ii, r0_ii, D0_ii = data['Nu_e_tt'], data['r0_tt'], data['D0_tt']
     else:
-        Nu_e_it, r0_it = data['Nu_e_it'], data['r0_it']
-        Nu_e_tt, r0_tt = data['Nu_e_tt'], data['r0_tt']
-        Nu_e_ii, r0_ii = data['Nu_e_ii'], data['r0_ii']
+        Nu_e_it, r0_it, D0_it = data['Nu_e_it'], data['r0_it'], data['D0_it']
+        Nu_e_tt, r0_tt, D0_tt = data['Nu_e_tt'], data['r0_tt'], data['D0_tt']
+        Nu_e_ii, r0_ii, D0_ii = data['Nu_e_ii'], data['r0_ii'], data['D0_ii']
 
     print(f"\033[32mVibrational data for {ion}->{target}:\033[0m")
-    print(f"\033[32m  Nu_e_it = {Nu_e_it:.5e} Hz, r0_it = {r0_it:.5e}\033[0m")
-    print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.5e} Hz, r0_tt = {r0_tt:.5e}\033[0m")
-    print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.5e} Hz, r0_ii = {r0_ii:.5e}\033[0m")
+    print(f"\033[32m  Nu_e_it = {Nu_e_it:.5e} Hz, r0_it = {r0_it:.5e}, D0_it = {D0_it:.5e} eV\033[0m")
+    print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.5e} Hz, r0_tt = {r0_tt:.5e}, D0_tt = {D0_tt:.5e} eV\033[0m")
+    print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.5e} Hz, r0_ii = {r0_ii:.5e}, D0_ii = {D0_ii:.5e} eV\033[0m")
 else:
     Nu_e_tt, r0_tt = 0, 0
     Nu_e_it, r0_it = 0, 0
@@ -164,7 +165,8 @@ def run_ingress_egress(root_dir):
     # Create a ProcessPoolExecutor
     with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
         results = []
-        for i in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
+        #for i in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
+        for i in range(1, 3001):
             folder_path = os.path.join(root_dir, str(i))
             # Find all .csv files in the folder
             csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
@@ -339,7 +341,7 @@ def process_molecule_target_1(group):
         
     return selected_rows
 
-""" Define a function to process each group of Dump File to clean the polyatomic_target.csv file """
+""" Function to process each group of Dump File to clean the polyatomic_target.csv file """
 def process_molecule_target_2(group):
     # Reset the index for each Dump File group
     group = group.reset_index(drop=True)
@@ -383,6 +385,73 @@ def process_molecule_target_2(group):
             selected_rows = group[group['Time Step'].isin(time_step_counts[time_step_counts == max_repeated_count].index)].head(a)
 
     return selected_rows
+
+""" Function to calculate translational, rotational, and vibrational kinetic energy """
+def kinetic_energy_analysis (x1, y1, z1, Vx1, Vy1, Vz1, m1, ke1, pe1, x2, y2, z2, Vx2, Vy2, Vz2, m2, ke2, pe2, total_mass, r, nu, r0, D0):
+        
+        COMx = ((x1 * m1) + (x2 * m2)) / total_mass
+        COMy = ((y1 * m1) + (y2 * m2)) / total_mass
+        COMz = ((z1 * m1) + (z2 * m2)) / total_mass
+
+        Vcom_x = ((Vx1 * m1) + (Vx2 * m2)) / total_mass
+        Vcom_y = ((Vy1 * m1) + (Vy2 * m2)) / total_mass
+        Vcom_z = ((Vz1 * m1) + (Vz2 * m2)) / total_mass
+
+        Vcom = np.sqrt(Vcom_x**2 + Vcom_y**2 + Vcom_z**2)
+
+        KE_tot = ke1 + ke2
+
+        KE_com = (1/2*((total_mass*1.6605e-27)*(Vcom*100)**2)) * 6.242e+18
+
+        r1 = [x1 - COMx, y1 - COMy, z1 - COMz]
+        r2 = [x2 - COMx, y2 - COMy, z2 - COMz]
+
+        v_rel1 = [Vx1 - Vcom_x, Vy1 - Vcom_y, Vz1 - Vcom_z]
+        v_rel2 = [Vx2 - Vcom_x, Vy2 - Vcom_y, Vz2 - Vcom_z]
+    
+        #I1 = m1 * (np.dot(r1, r1) * np.identity(3) - np.outer(r1, r1))
+        #I2 = m2 * (np.dot(r2, r2) * np.identity(3) - np.outer(r2, r2))
+        #I = I1 + I2
+
+        L1 = m1 * np.cross(r1, v_rel1)
+        L2 = m2 * np.cross(r2, v_rel2)
+
+        L = L1 + L2
+    
+        #omega = np.dot(np.linalg.pinv(I), L)
+    
+        mu = ((m1 * m2) / (m1 + m2))
+
+        #KE_rot = 0.5 * np.dot(omega, np.dot(I, omega)) * 1.036427e-4
+        KE_rot = ((1/(2*mu)) * (np.linalg.norm(L)/r)**2) * 1.036427e-4 #(converted to eV)
+
+        KE_vib = KE_tot - KE_rot - KE_com
+        KE_vib = max(KE_vib, 0)
+
+        PE_vib = abs(D0 - abs(pe1 + pe2))
+
+        E_vib = KE_vib + PE_vib
+
+        if r0_it != 0:
+            #J_term = (2 * mu * (r0)**2 * KE_rot) / (h_bar**2) * 9.648e3
+            #J_temp = (-1 + np.sqrt(1 + 4 * J_term)) / 2  # Solve for J(J+1)
+            J_temp = float((-1 + np.sqrt(1 + (4 * (np.linalg.norm(L)/(h_bar))**2))) / 2)  # Solve for J(J+1)
+            J = np.round(J_temp).astype(int)
+            J = max(J, 0)
+        else:
+            J = '-'
+
+        if Nu_e_it != 0:
+            n_temp = (E_vib) / (h_eV * nu) - 0.5
+            n = np.round(n_temp).astype(int)
+            if n >= 0:
+                n = n
+            else:
+                n = 0
+        else:
+            n = '-'
+
+        return KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz
 
 """ Function to find the spettered molecules and single ions leaving the surface """
 def generate_molecule_data(root_dir):
@@ -467,7 +536,8 @@ def generate_molecule_data(root_dir):
     with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
 
         # Process each RID value
-        for rid in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
+        #for rid in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
+        for rid in range(1, 3001):
             # Extract the numeric portion from the "rid" value
             #rid_numeric = int(rid.split(".")[1])
             rid_numeric = rid
@@ -543,7 +613,7 @@ def generate_molecule_data(root_dir):
                                         for ion_atom in ion_atoms:
                                             distance = calculate_distance(target_atom, ion_atom)
 
-                                            if target_atom['c_CMP_PE'] != 0 and distance <= 2 and float(ion_atom['c_CMP_PE']) > -2:
+                                            if target_atom['c_CMP_PE_sp'] != 0 and distance <= 2 and float(ion_atom['c_CMP_PE_sp']) > -2:
                                                 ids_target.append(target_atom['id'])
                                                 ids_ion.append(ion_atom['id'])
                                                 csv_writer.writerow([
@@ -553,10 +623,10 @@ def generate_molecule_data(root_dir):
                                                     str(target_atom['id']),
                                                     str(ion_atom['id']),
                                                     str(distance),
-                                                    str(target_atom['c_CMP_PE']),
-                                                    str(ion_atom['c_CMP_PE']),
-                                                    str(target_atom['c_CMP_KE']),
-                                                    str(ion_atom['c_CMP_KE']),
+                                                    str(target_atom['c_CMP_PE_sp']),
+                                                    str(ion_atom['c_CMP_PE_sp']),
+                                                    str(target_atom['c_CMP_KE_sp']),
+                                                    str(ion_atom['c_CMP_KE_sp']),
                                                     str(target_atom['x']),
                                                     str(target_atom['y']),
                                                     str(target_atom['z']),
@@ -577,7 +647,7 @@ def generate_molecule_data(root_dir):
                                                     if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
                                                         distance = calculate_distance(target_atom, target_atom2)
 
-                                                        if target_atom['c_CMP_PE'] != 0 and distance <= 2:
+                                                        if target_atom['c_CMP_PE_sp'] != 0 and distance <= 2:
                                                             ids_target.append(target_atom['id'])
                                                             csv_writer.writerow([
                                                                 file_name,
@@ -586,10 +656,10 @@ def generate_molecule_data(root_dir):
                                                                 str(target_atom['id']),
                                                                 str(target + ': ' + target_atom2['id']),
                                                                 str(distance),
-                                                                str(target_atom['c_CMP_PE']),
-                                                                str(target_atom2['c_CMP_PE']),
-                                                                str(target_atom['c_CMP_KE']),
-                                                                str(target_atom2['c_CMP_KE']),
+                                                                str(target_atom['c_CMP_PE_sp']),
+                                                                str(target_atom2['c_CMP_PE_sp']),
+                                                                str(target_atom['c_CMP_KE_sp']),
+                                                                str(target_atom2['c_CMP_KE_sp']),
                                                                 str(target_atom['x']),
                                                                 str(target_atom['y']),
                                                                 str(target_atom['z']),
@@ -610,7 +680,7 @@ def generate_molecule_data(root_dir):
                                             if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
                                                 distance = calculate_distance(target_atom, target_atom2)
 
-                                                if target_atom['c_CMP_PE'] != 0 and distance <= 3:
+                                                if target_atom['c_CMP_PE_sp'] != 0 and distance <= 3:
                                                     ids_target.append(target_atom['id'])
                                                     csv_writer.writerow([
                                                         file_name,
@@ -619,10 +689,10 @@ def generate_molecule_data(root_dir):
                                                         str(target_atom['id']),
                                                         str(target + ': ' + target_atom2['id']),
                                                         str(distance),
-                                                        str(target_atom['c_CMP_PE']),
-                                                        str(target_atom2['c_CMP_PE']),
-                                                        str(target_atom['c_CMP_KE']),
-                                                        str(target_atom2['c_CMP_KE']),
+                                                        str(target_atom['c_CMP_PE_sp']),
+                                                        str(target_atom2['c_CMP_PE_sp']),
+                                                        str(target_atom['c_CMP_KE_sp']),
+                                                        str(target_atom2['c_CMP_KE_sp']),
                                                         str(target_atom['x']),
                                                         str(target_atom['y']),
                                                         str(target_atom['z']),
@@ -653,7 +723,7 @@ def generate_molecule_data(root_dir):
                                         if ion_atom1 != ion_atom2 and ion_atom1['id'] not in ids_ion:
                                             distance = calculate_distance(ion_atom1, ion_atom2)
 
-                                            if ion_atom1['c_CMP_PE'] != 0 and ion_atom2['c_CMP_PE'] == ion_atom1['c_CMP_PE'] and distance <= 1:
+                                            if ion_atom1['c_CMP_PE_sp'] != 0 and ion_atom2['c_CMP_PE_sp'] == ion_atom1['c_CMP_PE_sp'] and distance <= 1:
                                                 ids_ion.append(ion_atom2['id'])
                                                 csv_writer.writerow([
                                                     file_name,
@@ -661,10 +731,10 @@ def generate_molecule_data(root_dir):
                                                     str(ion_atom1['id']),
                                                     str(ion_atom2['id']),
                                                     str(distance),
-                                                    str(ion_atom1['c_CMP_PE']),
-                                                    str(ion_atom2['c_CMP_PE']),
-                                                    str(ion_atom1['c_CMP_KE']),
-                                                    str(ion_atom2['c_CMP_KE']),
+                                                    str(ion_atom1['c_CMP_PE_sp']),
+                                                    str(ion_atom2['c_CMP_PE_sp']),
+                                                    str(ion_atom1['c_CMP_KE_sp']),
+                                                    str(ion_atom2['c_CMP_KE_sp']),
                                                     str(ion_atom1['x']),
                                                     str(ion_atom1['y']),
                                                     str(ion_atom1['z']),
@@ -688,14 +758,14 @@ def generate_molecule_data(root_dir):
 
                                 for atom in timestep['atoms']:
 
-                                    if atom['element'] == f'{ion}' and float(atom['c_CMP_PE']) == 0 and atom['id'] not in ids_ion:
+                                    if atom['element'] == f'{ion}' and float(atom['c_CMP_PE_sp']) == 0 and atom['id'] not in ids_ion:
                                         ids_ion.append(atom['id'])
                                         csv_writer.writerow([
                                             file_name,
                                             str(timestep['time']),
                                             str(atom['id']),
-                                            str(atom['c_CMP_PE']),
-                                            str(atom['c_CMP_KE']),
+                                            str(atom['c_CMP_PE_sp']),
+                                            str(atom['c_CMP_KE_sp']),
                                             str(atom['vx']),
                                             str(atom['vy']),
                                             str(atom['vz'])
@@ -709,13 +779,13 @@ def generate_molecule_data(root_dir):
     diatomic_target = []
     polyatomic_target = []
 
-    # Group by 'Dump File' and 'ID_W' to process each simulation separately
-    grouped = molecule_df.groupby(['Dump File', 'Time Step'])
+    # Group by 'Dump File' to process each simulation separately
+    grouped = molecule_df.groupby('Dump File')
 
-    for (dump_file, molecule_id), group in grouped:
+    for dump_file, group in grouped:
         # Check if 'ID_ion' is '-' for rows where we only have target2 molecules
         if group[f'ID_{ion}'].astype(str).str.startswith(target + ': ').iloc[0]:
-            # Count unique 'ID_W' for W2 molecules
+            # Count unique 'ID_target' for target2 molecules
             unique_target_count = group[f'ID_{target}'].nunique()
             if unique_target_count == 1:
                 diatomic_target.append(group)
@@ -848,85 +918,13 @@ def generate_molecule_data(root_dir):
                 # Compute the total mass of the system
                 total_mass = mass_target * 2
 
-                # Calculate the x, y, and z-coordinate of the center of mass (COM) using the weighted average formula
-                COMx = ((row[f'X_{target}'] * mass_target) + (row[f'X_{ion}'] * mass_target)) / total_mass
-                COMy = ((row[f'Y_{target}'] * mass_target) + (row[f'Y_{ion}'] * mass_target)) / total_mass
-                COMz = ((row[f'Z_{target}'] * mass_target) + (row[f'Z_{ion}'] * mass_target)) / total_mass
-
-                # Calculate the x, y, and z-component of the velocity of the center of mass
-                Vcom_x = ((row[f'Vx_{target}'] * mass_target) + (row[f'Vx_{ion}'] * mass_target)) / total_mass
-                Vcom_y = ((row[f'Vy_{target}'] * mass_target) + (row[f'Vy_{ion}'] * mass_target)) / total_mass
-                Vcom_z = ((row[f'Vz_{target}'] * mass_target) + (row[f'Vz_{ion}'] * mass_target)) / total_mass
-
-                # Compute the magnitude of the center-of-mass velocity vector
-                Vcom = np.sqrt(Vcom_x**2 + Vcom_y**2 + Vcom_z**2)
-
-                # Total kinetic energy (translation + rotational + vibrational) from the dataset
-                KE_tot = row[f'KE {target}'] + row[f'KE {ion}']
-
-                # Compute the translational kinetic energy (convert to SI units and then to eV)
-                KE_com = (1/2*((total_mass*1.6605e-27)*(Vcom*100)**2)) * 6.242e+18
- 
-                # Compute the position vector of the target and ion atom relative to the COM
-                r1 = [row[f'X_{target}'] - COMx, row[f'Y_{target}'] - COMy, row[f'Z_{target}'] - COMz]
-                r2 = [row[f'X_{ion}'] - COMx, row[f'Y_{ion}'] - COMy, row[f'Z_{ion}'] - COMz]
-
-                # Compute the velocity of the target and ion relative to the center of mass
-                v_rel1 = [row[f'Vx_{target}'] - Vcom_x, row[f'Vy_{target}'] - Vcom_y, row[f'Vz_{target}'] - Vcom_z]
-                v_rel2 = [row[f'Vx_{ion}'] - Vcom_x, row[f'Vy_{ion}'] - Vcom_y, row[f'Vz_{ion}'] - Vcom_z]
-            
-                # Compute the moment of inertia tensor for the target and ion
-                I1 = mass_target * (np.dot(r1, r1) * np.identity(3) - np.outer(r1, r1))
-                I2 = mass_target * (np.dot(r2, r2) * np.identity(3) - np.outer(r2, r2))
-
-                # Total moment of inertia tensor for the diatomic molecule
-                I = I1 + I2
-
-                # Compute the angular momentum vector for the target and ion
-                L1 = mass_target * np.cross(r1, v_rel1)
-                L2 = mass_target * np.cross(r2, v_rel2)
-
-                # Total angular momentum of the system
-                L = L1 + L2
-            
-                # Solve for angular velocity vector using the pseudo-inverse of the inertia tensor
-                omega = np.dot(np.linalg.pinv(I), L)
-            
-                # Compute rotational kinetic energy in eV
-                KE_rot = 0.5 * np.dot(omega, np.dot(I, omega)) * 1.036427e-4
-                
-                # Compute vibrational kinetic energy
-                KE_vib = KE_tot - KE_rot - KE_com
-                
-                # Reduced mass of the diatomic molecule in kg
-                mu = ((mass_target * mass_target) / (mass_target + mass_target)) * 1.6605e-27
-
-                if r0_tt !=0:
-                    # Compute the rotational quantum number J based on rotational kinetic energy
-                    J_term = (2 * mu * (r0_tt * 1e-10)**2 * KE_rot) / (hbar**2 * 6.242e+18)
-                    J_temp = (-1 + np.sqrt(1 + 4 * J_term)) / 2  # Solve for J(J+1)
-
-                    # Round to nearest integer for J (ensuring non-negative values)
-                    J = np.round(J_temp).astype(int)
-                    if J >= 0:
-                        J = J
-                    else:
-                        J = 0
-                else:
-                    J = '-'
-
-                if Nu_e_tt != 0:
-                    # Compute the vibrational quantum number n based on vibrational energy
-                    n_temp = (2 * KE_vib) / (h_eV * Nu_e_tt) - 0.5
-
-                    # Round to nearest integer for n (ensuring non-negative values)
-                    n = np.round(n_temp).astype(int)
-                    if n >= 0:
-                        n = n
-                    else:
-                        n = 0
-                else:
-                    n = '-'
+                KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz = kinetic_energy_analysis (row[f'X_{target}'], row[f'Y_{target}'], row[f'Z_{target}'], 
+                                                                                                                                row[f'Vx_{target}'], row[f'Vy_{target}'], row[f'Vz_{target}'], 
+                                                                                                                                mass_target, row[f'KE {target}'], row[f'PE {target}'], 
+                                                                                                                                row[f'X_{ion}'], row[f'Y_{ion}'], row[f'Z_{ion}'], 
+                                                                                                                                row[f'Vx_{ion}'], row[f'Vy_{ion}'], row[f'Vz_{ion}'], 
+                                                                                                                                mass_target, row[f'KE {ion}'], row[f'PE {ion}'], 
+                                                                                                                                total_mass, row['Bond length'], Nu_e_tt, r0_tt, D0_tt)
 
                 molecule = f'{target}{len(target_id) + len(ion_id)}'
                 id_molecule = f'{target_id} and {ion_id}'
@@ -940,6 +938,7 @@ def generate_molecule_data(root_dir):
                                 KE_com,
                                 KE_rot,
                                 KE_vib,
+                                E_vib,
                                 J,
                                 n,
                                 Vcom,
@@ -953,65 +952,14 @@ def generate_molecule_data(root_dir):
 
             else:
                 total_mass = mass_target + mass_ion
-                COMx = ((row[f'X_{target}'] * mass_target) + (row[f'X_{ion}'] * mass_ion)) / total_mass
-                COMy = ((row[f'Y_{target}'] * mass_target) + (row[f'Y_{ion}'] * mass_ion)) / total_mass
-                COMz = ((row[f'Z_{target}'] * mass_target) + (row[f'Z_{ion}'] * mass_ion)) / total_mass
 
-                Vcom_x = ((row[f'Vx_{target}'] * mass_target) + (row[f'Vx_{ion}'] * mass_ion)) / total_mass
-                Vcom_y = ((row[f'Vy_{target}'] * mass_target) + (row[f'Vy_{ion}'] * mass_ion)) / total_mass
-                Vcom_z = ((row[f'Vz_{target}'] * mass_target) + (row[f'Vz_{ion}'] * mass_ion)) / total_mass
-
-                Vcom = np.sqrt(Vcom_x**2 + Vcom_y**2 + Vcom_z**2)
-
-                KE_tot = row[f'KE {target}'] + row[f'KE {ion}']
-
-                KE_com = (1/2*((total_mass*1.6605e-27)*(Vcom*100)**2)) * 6.242e+18
-
-                r1 = [row[f'X_{target}'] - COMx, row[f'Y_{target}'] - COMy, row[f'Z_{target}'] - COMz]
-                r2 = [row[f'X_{ion}'] - COMx, row[f'Y_{ion}'] - COMy, row[f'Z_{ion}'] - COMz]
-
-                v_rel1 = [row[f'Vx_{target}'] - Vcom_x, row[f'Vy_{target}'] - Vcom_y, row[f'Vz_{target}'] - Vcom_z]
-                v_rel2 = [row[f'Vx_{ion}'] - Vcom_x, row[f'Vy_{ion}'] - Vcom_y, row[f'Vz_{ion}'] - Vcom_z]
-            
-                # Moment of Inertia Tensor (I)       
-                I1 = mass_target * (np.dot(r1, r1) * np.identity(3) - np.outer(r1, r1))
-                I2 = mass_ion * (np.dot(r2, r2) * np.identity(3) - np.outer(r2, r2))
-                I = I1 + I2
-                
-                # Angular Momentum (L): L = m*r*v
-                L1 = mass_target * np.cross(r1, v_rel1)
-                L2 = mass_ion * np.cross(r2, v_rel2)
-                L = L1 + L2
-            
-                # omega = I^-1 . L
-                omega = np.dot(np.linalg.pinv(I), L)
-            
-                KE_rot = 0.5 * np.dot(omega, np.dot(I, omega)) * 1.036427e-4
-                
-                KE_vib = KE_tot - KE_rot - KE_com
-                
-                mu = ((mass_target * mass_ion) / (mass_target + mass_ion)) * 1.6605e-27
-
-                if r0_it != 0:
-                    J_term = (2 * mu * (r0_it * 1e-10)**2 * KE_rot) / (hbar**2 * 6.242e+18)
-                    J_temp = (-1 + np.sqrt(1 + 4 * J_term)) / 2  # Solve for J(J+1)
-                    J = np.round(J_temp).astype(int)
-                    if J >= 0:
-                        J = J
-                    else:
-                        J = 0
-                else:
-                    J = '-'
-
-                if Nu_e_it != 0:
-                    n_temp = (2 * KE_vib) / (h_eV * Nu_e_it) - 0.5
-                    n = np.round(n_temp).astype(int)
-                    if n >= 0:
-                        n = n
-                    else:
-                        n = 0
-                else:
-                    n = '-'
+                KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz = kinetic_energy_analysis (row[f'X_{target}'], row[f'Y_{target}'], row[f'Z_{target}'], 
+                                                                                                                                row[f'Vx_{target}'], row[f'Vy_{target}'], row[f'Vz_{target}'], 
+                                                                                                                                mass_target, row[f'KE {target}'], row[f'PE {target}'], 
+                                                                                                                                row[f'X_{ion}'], row[f'Y_{ion}'], row[f'Z_{ion}'], 
+                                                                                                                                row[f'Vx_{ion}'], row[f'Vy_{ion}'], row[f'Vz_{ion}'], 
+                                                                                                                                mass_ion, row[f'KE {ion}'], row[f'PE {ion}'], 
+                                                                                                                                total_mass, row['Bond length'], Nu_e_it, r0_it, D0_it)
 
                 molecule = f'{target}{len(target_id)}{ion}{len(ion_id)}'
                 id_molecule = f'{target_id} and {ion_id}'
@@ -1025,6 +973,7 @@ def generate_molecule_data(root_dir):
                                 KE_com,
                                 KE_rot,
                                 KE_vib,
+                                E_vib,
                                 J,
                                 n,
                                 Vcom,
@@ -1045,6 +994,7 @@ def generate_molecule_data(root_dir):
                                                     'KE_com',
                                                     'KE_rot',
                                                     'KE_vib',
+                                                    'E_vib',
                                                     'Rot quantum #',
                                                     'Vib quantum #',
                                                     'Vcom', 
@@ -1061,14 +1011,14 @@ def generate_molecule_data(root_dir):
 
         if r0_it != 0:
 
-            final_rovib_data =  os.path.join(root_dir, "final_rovib_data.csv")  # Replace with your desired output file path
-            rovib_data = pd.read_csv(diatomic_output)
+            final_rovib_target =  os.path.join(root_dir, "final_rovib_target.csv")  # Replace with your desired output file path
+            rovib_target = pd.read_csv(diatomic_output)
 
             # Columns to average
             columns_to_average = ["Rot quantum #", "Vib quantum #"]
 
             # Group by 'Dump File' and 'ID', and compute the mean for numeric columns
-            grouped_rovib = rovib_data.groupby(['Dump File', 'ID'])
+            grouped_rovib = rovib_target.groupby(['Dump File', 'ID'])
 
             # Compute the mean for the rotational and vibrational quantum numbers
             averaged = grouped_rovib[columns_to_average].mean()
@@ -1082,7 +1032,7 @@ def generate_molecule_data(root_dir):
             rovib[columns_to_average] = averaged
 
             # Save the result to a new CSV file
-            rovib.reset_index().to_csv(final_rovib_data, index=False)
+            rovib.reset_index().to_csv(final_rovib_target, index=False)
 
     # Calculate center of mass for each unique combination of "Dump File" and f"ID_{ion}1"
     df_ion    = pd.read_csv(output_molecule_ion)
@@ -1095,56 +1045,14 @@ def generate_molecule_data(root_dir):
         ion_id2 = [row[f'ID_{ion}2']]
 
         total_mass = mass_ion * (len(ion_id1) + len(ion_id2))
-        COMx = ((row[f'X_{ion}1'] * mass_ion) + (row[f'X_{ion}2'] * mass_ion)) / total_mass
-        COMy = ((row[f'Y_{ion}1'] * mass_ion) + (row[f'Y_{ion}2'] * mass_ion)) / total_mass
-        COMz = ((row[f'Z_{ion}1'] * mass_ion) + (row[f'Z_{ion}2'] * mass_ion)) / total_mass
 
-        Vcom_x = ((row[f'Vx_{ion}1'] * mass_ion) + (row[f'Vx_{ion}2'] * mass_ion)) / total_mass
-        Vcom_y = ((row[f'Vy_{ion}1'] * mass_ion) + (row[f'Vy_{ion}2'] * mass_ion)) / total_mass
-        Vcom_z = ((row[f'Vz_{ion}1'] * mass_ion) + (row[f'Vz_{ion}2'] * mass_ion)) / total_mass
-
-        Vcom = np.sqrt(Vcom_x**2 + Vcom_y**2 + Vcom_z**2)
-
-        KE_tot = row[f'KE {ion}1'] + row[f'KE {ion}2']
-
-        KE_com = (1/2*((total_mass*1.6605e-27)*(Vcom*100)**2)) * 6.242e+18
-
-        r1 = [row[f'X_{ion}1'] - COMx, row[f'Y_{ion}1'] - COMy, row[f'Z_{ion}1'] - COMz]
-        r2 = [row[f'X_{ion}2'] - COMx, row[f'Y_{ion}2'] - COMy, row[f'Z_{ion}2'] - COMz]
-
-        v_rel1 = [row[f'Vx_{ion}1'] - Vcom_x, row[f'Vy_{ion}1'] - Vcom_y, row[f'Vz_{ion}1'] - Vcom_z]
-        v_rel2 = [row[f'Vx_{ion}2'] - Vcom_x, row[f'Vy_{ion}2'] - Vcom_y, row[f'Vz_{ion}2'] - Vcom_z]
-    
-        I1 = mass_ion * (np.dot(r1, r1) * np.identity(3) - np.outer(r1, r1))
-        I2 = mass_ion * (np.dot(r2, r2) * np.identity(3) - np.outer(r2, r2))
-        I = I1 + I2
-
-        L1 = mass_ion * np.cross(r1, v_rel1)
-        L2 = mass_ion * np.cross(r2, v_rel2)
-        L = L1 + L2
-    
-        omega = np.dot(np.linalg.pinv(I), L)
-    
-        KE_rot = 0.5 * np.dot(omega, np.dot(I, omega)) * 1.036427e-4
-        
-        KE_vib = KE_tot - KE_rot - KE_com
-        
-        mu = ((mass_ion * mass_ion) / (mass_ion + mass_ion)) * 1.6605e-27
-
-        J_term = (2 * mu * (float(row['Bond length']) * 1e-10)**2 * KE_rot) / (hbar**2 * 6.242e+18)
-        l = (-1 + np.sqrt(1 + 4 * J_term)) / 2  # Solve for J(J+1)
-        J = np.round(l).astype(int)
-        if J >= 0:
-            J = J
-        else:
-            J = 0
-
-        k = (2 * KE_vib) / (h_eV * Nu_e_ii) - 0.5
-        n = np.round(k).astype(int)
-        if n >= 0:
-            n = n
-        else:
-            n = 0
+        KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz = kinetic_energy_analysis (row[f'X_{ion}1'], row[f'Y_{ion}1'], row[f'Z_{ion}1'], 
+                                                                                                                        row[f'Vx_{ion}1'], row[f'Vy_{ion}1'], row[f'Vz_{ion}1'], 
+                                                                                                                        mass_ion, row[f'KE {ion}1'], row[f'PE {ion}1'], 
+                                                                                                                        row[f'X_{ion}2'], row[f'Y_{ion}2'], row[f'Z_{ion}2'], 
+                                                                                                                        row[f'Vx_{ion}2'], row[f'Vy_{ion}2'], row[f'Vz_{ion}2'], 
+                                                                                                                        mass_ion, row[f'KE {ion}2'], row[f'PE {ion}2'], 
+                                                                                                                        total_mass, row['Bond length'], Nu_e_ii, r0_ii, D0_ii)
 
         molecule = f'{ion}{len(ion_id1) + len(ion_id2)}'
         id_ion = f'{ion_id1} and {ion_id2}'
@@ -1158,6 +1066,7 @@ def generate_molecule_data(root_dir):
                          KE_com,
                          KE_rot,
                          KE_vib,
+                         E_vib,
                          J,
                          n,
                          Vcom,
@@ -1178,6 +1087,7 @@ def generate_molecule_data(root_dir):
                                                  'KE_com',
                                                  'KE_rot',
                                                  'KE_vib',
+                                                 'E_vib',
                                                  'Rot quantum #',
                                                  'Vib quantum #',
                                                  'Vcom', 
@@ -1191,6 +1101,31 @@ def generate_molecule_data(root_dir):
 
     # Write the result to the output CSV file
     com_df_ion.to_csv(output_molecule_ion, index=False)
+
+    if r0_ii != 0:
+
+        final_rovib_ion =  os.path.join(root_dir, "final_rovib_ion.csv")  # Replace with your desired output file path
+        rovib_ion = pd.read_csv(output_molecule_ion)
+
+        # Columns to average
+        columns_to_average = ["Rot quantum #", "Vib quantum #"]
+
+        # Group by 'Dump File' and 'ID', and compute the mean for numeric columns
+        grouped_rovib = rovib_ion.groupby(['Dump File', 'ID'])
+
+        # Compute the mean for the rotational and vibrational quantum numbers
+        averaged = grouped_rovib[columns_to_average].mean()
+        averaged = averaged.round(0)
+
+        # Extract the last row of each group for all other columns
+        last_rows = grouped_rovib.last()
+
+        # Combine the averaged and last row data
+        rovib = last_rows.copy()
+        rovib[columns_to_average] = averaged
+
+            # Save the result to a new CSV file
+        rovib.reset_index().to_csv(final_rovib_ion, index=False)
 
 """ Function to calculate the type and number of sputtered species"""
 def sputtered_species(name, root_dir):
@@ -1301,11 +1236,20 @@ def process_directory(name, dire, ion):
                     if total_events > 0:
                         physical_yield = physical_count / total_events
                         physical_error = math.sqrt(abs((physical_yield * (1 - physical_yield)) / total_events))
+
                         total_yield = total_count / total_events
                         total_error = math.sqrt(abs(total_yield * (1 - total_yield)) / total_events)
+
+                        chemical_yield = total_yield - physical_yield
+                        chemical_error = math.sqrt(abs(chemical_yield * (1 - chemical_yield)) / total_events)
+
                         results[energy] = {
                             'physical yield': physical_yield,
                             'physical error': physical_error,
+
+                            'chemical yield': chemical_yield,
+                            'chemical error': chemical_error,
+
                             'total yield': total_yield,
                             'total error': total_error
                         }
@@ -1313,6 +1257,10 @@ def process_directory(name, dire, ion):
                         results[energy] = {
                             'physical yield': 'N/A (event.csv is empty)',
                             'physical error': 'N/A (event.csv is empty)',
+
+                            'chemical yield': 'N/A (event.csv is empty)',
+                            'chemical error': 'N/A (event.csv is empty)',
+
                             'total yield': 'N/A (event.csv is empty)',
                             'total error': 'N/A (event.csv is empty)'
                         }
@@ -1320,6 +1268,10 @@ def process_directory(name, dire, ion):
                     results[energy] = {
                         'physical yield': 'N/A (event.csv is missing)',
                         'physical error': 'N/A (event.csv is missing)',
+
+                        'chemical yield': 'N/A (event.csv is missing)',
+                        'chemical error': 'N/A (event.csv is missing)',
+
                         'total yield': 'N/A (event.csv is missing)',
                         'total error': 'N/A (event.csv is missing)'
                     }
@@ -1355,6 +1307,10 @@ def main():
             if energy in yields[dir_name]:
                 physical_yield_value = yields[dir_name][energy]['physical yield']
                 physical_error_value = yields[dir_name][energy]['physical error']
+
+                chemical_yield_value = yields[dir_name][energy]['chemical yield']
+                chemical_error_value = yields[dir_name][energy]['chemical error']
+
                 total_yield_value = yields[dir_name][energy]['total yield']
                 total_error_value = yields[dir_name][energy]['total error']
 
@@ -1363,6 +1319,10 @@ def main():
                         'Energy': energy,
                         'Physical Yield': f'{physical_yield_value:.6f}',
                         'Physical Error': f'{physical_error_value:.6f}',
+
+                        'Chemical Yield': f'{chemical_yield_value:.6f}',
+                        'Chemical Error': f'{chemical_error_value:.6f}',
+
                         'Total Yield': f'{total_yield_value:.6f}',
                         'Total Error': f'{total_error_value:.6f}'
                     })
@@ -1370,6 +1330,7 @@ def main():
                     data_for_json['Yield'][dir_name].append({
                         'Energy': energy,
                         'Physical Yield': physical_yield_value,
+                        'Chemical Yield': chemical_yield_value,
                         'Total Yield': total_yield_value
                     })
 
