@@ -32,7 +32,7 @@ vibrational_data = {
     ('Be', 'D'): {'Nu_e_it': 6.39396e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
     ('Be', 'T'): {'Nu_e_it': 5.45722e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
     #('B', 'W') : {'Nu_e_it': 3.20960e13, 'r0_it': 1.4707, 'D0_it': 0.000000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.56530, 'D0_tt': 0.00000, 'Nu_e_ii': 6.02760e12, 'r0_ii': 2.06120, 'D0_ii': 0.0000}, # Antoine's potential
-    #('B', 'Ar'): {'Nu_e_it': 0.00000000, 'r0_it': 0.0000, 'D0_it': 0.000000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.56530, 'D0_tt': 0.00000, 'Nu_e_ii': 0.00000000, 'r0_ii': 0.00000, 'D0_ii': 0.0000}, # Antoine's potential
+    ('B', 'Ar'): {'Nu_e_it': 0.00000000, 'r0_it': 0.0000, 'D0_it': 0.000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.51509, 'D0_tt': 3.74655, 'Nu_e_ii': 0.00000000, 'r0_ii': 0.00000, 'D0_ii': 0.0000}, # Antoine's potential
     ('W', 'H') : {'Nu_e_it': 5.58144e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
     ('W', 'D') : {'Nu_e_it': 3.95741e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
     ('W', 'T') : {'Nu_e_it': 3.24259e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
@@ -149,7 +149,8 @@ def ingress_egress(fname):
             e1 = -diff1.loc[diff1 < 0].sum().astype("int32")
             e2 = -diff2.loc[diff2 < 0].sum().astype("int32")
             # no. of sputtered as minimum between ingress/egress counts
-            sputtered = min(i1, i2, e1, e2)
+            #sputtered = min(i1, i2, e1, e2)
+            sputtered = min(i2, e2)
         # Get the value of the "seed"
         seed = df.iloc[-1, -1]
         return rid, i1, i2, e1, e2, sputtered, event, seed
@@ -165,8 +166,7 @@ def run_ingress_egress(root_dir):
     # Create a ProcessPoolExecutor
     with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
         results = []
-        #for i in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
-        for i in range(1, 3001):
+        for i in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
             folder_path = os.path.join(root_dir, str(i))
             # Find all .csv files in the folder
             csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
@@ -212,7 +212,8 @@ def generate_sputtered_data(root_dir):
     df = pd.read_csv(input_file)
 
     # Filter rows where "sputtered" is non-zero
-    non_zero_sputtered_df = df[df["sputtered"] != 0]
+    #non_zero_sputtered_df = df[df["sputtered"] != 0]
+    non_zero_sputtered_df = df[df["event"] == True]
 
     # Extract the "rid" values corresponding to non-zero "sputtered"
     rid_values = non_zero_sputtered_df["rid"].tolist()
@@ -389,69 +390,86 @@ def process_molecule_target_2(group):
 """ Function to calculate translational, rotational, and vibrational kinetic energy """
 def kinetic_energy_analysis (x1, y1, z1, Vx1, Vy1, Vz1, m1, ke1, pe1, x2, y2, z2, Vx2, Vy2, Vz2, m2, ke2, pe2, total_mass, r, nu, r0, D0):
         
-        COMx = ((x1 * m1) + (x2 * m2)) / total_mass
-        COMy = ((y1 * m1) + (y2 * m2)) / total_mass
-        COMz = ((z1 * m1) + (z2 * m2)) / total_mass
+    COMx = ((x1 * m1) + (x2 * m2)) / total_mass
+    COMy = ((y1 * m1) + (y2 * m2)) / total_mass
+    COMz = ((z1 * m1) + (z2 * m2)) / total_mass
 
-        Vcom_x = ((Vx1 * m1) + (Vx2 * m2)) / total_mass
-        Vcom_y = ((Vy1 * m1) + (Vy2 * m2)) / total_mass
-        Vcom_z = ((Vz1 * m1) + (Vz2 * m2)) / total_mass
+    Vcom_x = ((Vx1 * m1) + (Vx2 * m2)) / total_mass
+    Vcom_y = ((Vy1 * m1) + (Vy2 * m2)) / total_mass
+    Vcom_z = ((Vz1 * m1) + (Vz2 * m2)) / total_mass
 
-        Vcom = np.sqrt(Vcom_x**2 + Vcom_y**2 + Vcom_z**2)
+    Vcom = np.sqrt(Vcom_x**2 + Vcom_y**2 + Vcom_z**2)
 
-        KE_tot = ke1 + ke2
+    KE_tot = ke1 + ke2
 
-        KE_com = (1/2*((total_mass*1.6605e-27)*(Vcom*100)**2)) * 6.242e+18
+    KE_com = (1/2*((total_mass*1.6605e-27)*(Vcom*100)**2)) * 6.242e+18
 
-        r1 = [x1 - COMx, y1 - COMy, z1 - COMz]
-        r2 = [x2 - COMx, y2 - COMy, z2 - COMz]
+    r1 = [x1 - COMx, y1 - COMy, z1 - COMz]
+    r2 = [x2 - COMx, y2 - COMy, z2 - COMz]
 
-        v_rel1 = [Vx1 - Vcom_x, Vy1 - Vcom_y, Vz1 - Vcom_z]
-        v_rel2 = [Vx2 - Vcom_x, Vy2 - Vcom_y, Vz2 - Vcom_z]
+    v_rel1 = [Vx1 - Vcom_x, Vy1 - Vcom_y, Vz1 - Vcom_z]
+    v_rel2 = [Vx2 - Vcom_x, Vy2 - Vcom_y, Vz2 - Vcom_z]
     
-        #I1 = m1 * (np.dot(r1, r1) * np.identity(3) - np.outer(r1, r1))
-        #I2 = m2 * (np.dot(r2, r2) * np.identity(3) - np.outer(r2, r2))
-        #I = I1 + I2
+    #I1 = m1 * (np.dot(r1, r1) * np.identity(3) - np.outer(r1, r1))
+    #I2 = m2 * (np.dot(r2, r2) * np.identity(3) - np.outer(r2, r2))
+    #I = I1 + I2
 
-        L1 = m1 * np.cross(r1, v_rel1)
-        L2 = m2 * np.cross(r2, v_rel2)
+    L1 = m1 * np.cross(r1, v_rel1)
+    L2 = m2 * np.cross(r2, v_rel2)
 
-        L = L1 + L2
+    L = L1 + L2
     
-        #omega = np.dot(np.linalg.pinv(I), L)
+    #omega = np.dot(np.linalg.pinv(I), L)
     
-        mu = ((m1 * m2) / (m1 + m2))
+    mu = ((m1 * m2) / (m1 + m2))
 
-        #KE_rot = 0.5 * np.dot(omega, np.dot(I, omega)) * 1.036427e-4
-        KE_rot = ((1/(2*mu)) * (np.linalg.norm(L)/r)**2) * 1.036427e-4 #(converted to eV)
+    #KE_rot = 0.5 * np.dot(omega, np.dot(I, omega)) * 1.036427e-4
+    KE_rot = ((1/(2*mu)) * (np.linalg.norm(L)/r)**2) * 1.036427e-4 #(converted to eV)
 
-        KE_vib = KE_tot - KE_rot - KE_com
-        KE_vib = max(KE_vib, 0)
+    KE_vib = KE_tot - KE_rot - KE_com
+    KE_vib = max(KE_vib, 0)
 
-        PE_vib = abs(D0 - abs(pe1 + pe2))
+    PE_vib = abs(D0 - abs(pe1 + pe2))
 
-        E_vib = KE_vib + PE_vib
+    E_vib = KE_vib + PE_vib
 
-        if r0_it != 0:
-            #J_term = (2 * mu * (r0)**2 * KE_rot) / (h_bar**2) * 9.648e3
-            #J_temp = (-1 + np.sqrt(1 + 4 * J_term)) / 2  # Solve for J(J+1)
-            J_temp = float((-1 + np.sqrt(1 + (4 * (np.linalg.norm(L)/(h_bar))**2))) / 2)  # Solve for J(J+1)
-            J = np.round(J_temp).astype(int)
-            J = max(J, 0)
+    if r0_it != 0:
+        #J_term = (2 * mu * (r0)**2 * KE_rot) / (h_bar**2) * 9.648e3
+        #J_temp = (-1 + np.sqrt(1 + 4 * J_term)) / 2  # Solve for J(J+1)
+        J_temp = float((-1 + np.sqrt(1 + (4 * (np.linalg.norm(L)/(h_bar))**2))) / 2)  # Solve for J(J+1)
+        J = np.round(J_temp).astype(int)
+        J = max(J, 0)
+    else:
+        J = '-'
+
+    if Nu_e_it != 0:
+        n_temp = (E_vib) / (h_eV * nu) - 0.5
+        n = np.round(n_temp).astype(int)
+        if n >= 0:
+            n = n
         else:
-            J = '-'
+            n = 0
+    else:
+        n = '-'
 
-        if Nu_e_it != 0:
-            n_temp = (E_vib) / (h_eV * nu) - 0.5
-            n = np.round(n_temp).astype(int)
-            if n >= 0:
-                n = n
-            else:
-                n = 0
-        else:
-            n = '-'
+    return KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz
 
-        return KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz
+def escape_angle(Vx, Vy, Vz):
+
+    Vx, Vy, Vz = float(Vx), float(Vy), float(Vz)
+    # Calculate the magnitude of the velocity vector
+    magnitude = math.sqrt(Vx**2 + Vy**2 + Vz**2)
+
+    # Calculate direction cosines
+    gamma = Vz / magnitude
+
+    # Calculate the angle with respect to the z-axis
+    theta_rad = math.acos(gamma)
+
+    # Convert the angle to degrees if needed
+    theta_deg = math.degrees(theta_rad)
+
+    return theta_deg
 
 """ Function to find the spettered molecules and single ions leaving the surface """
 def generate_molecule_data(root_dir):
@@ -461,6 +479,19 @@ def generate_molecule_data(root_dir):
     polyatomic_output = os.path.join(root_dir, "polyatomic_target.csv")
     output_molecule_ion = os.path.join(root_dir, "ion_molecules.csv")
     output_single_ion = os.path.join(root_dir, "ion_single.csv")
+
+    non_empty_files = []
+    for i in range(1, 12001):
+        folder = os.path.join(root_dir, str(i))
+        if not os.path.isdir(folder):
+            continue
+
+        for file in os.listdir(folder):
+            if file.endswith(".txt"):
+                file_path = os.path.join(folder, file)
+                if os.path.getsize(file_path) > 0:
+                    non_empty_files.append(str(i))
+                    break
 
     # Write headers for CSV files
     with open(output_molecule_target, 'w', newline='') as file:
@@ -524,20 +555,21 @@ def generate_molecule_data(root_dir):
             "ID",
             "PE",
             "KE",
+            "escape_angle",
             "Vx",
             "Vy",
             "Vz"
         ])
 
     # Number of cores to use for parallel processing
-    number_of_cores = 30
+    number_of_cores = 10
 
     # Create a ProcessPoolExecutor
     with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
 
         # Process each RID value
         #for rid in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
-        for rid in range(1, 3001):
+        for rid in non_empty_files:
             # Extract the numeric portion from the "rid" value
             #rid_numeric = int(rid.split(".")[1])
             rid_numeric = rid
@@ -613,7 +645,7 @@ def generate_molecule_data(root_dir):
                                         for ion_atom in ion_atoms:
                                             distance = calculate_distance(target_atom, ion_atom)
 
-                                            if target_atom['c_CMP_PE_sp'] != 0 and distance <= 2 and float(ion_atom['c_CMP_PE_sp']) > -2:
+                                            if target_atom['c_CMP_PE'] != 0 and distance <= 2 and float(ion_atom['c_CMP_PE']) > -2:
                                                 ids_target.append(target_atom['id'])
                                                 ids_ion.append(ion_atom['id'])
                                                 csv_writer.writerow([
@@ -623,10 +655,10 @@ def generate_molecule_data(root_dir):
                                                     str(target_atom['id']),
                                                     str(ion_atom['id']),
                                                     str(distance),
-                                                    str(target_atom['c_CMP_PE_sp']),
-                                                    str(ion_atom['c_CMP_PE_sp']),
-                                                    str(target_atom['c_CMP_KE_sp']),
-                                                    str(ion_atom['c_CMP_KE_sp']),
+                                                    str(target_atom['c_CMP_PE']),
+                                                    str(ion_atom['c_CMP_PE']),
+                                                    str(target_atom['c_CMP_KE']),
+                                                    str(ion_atom['c_CMP_KE']),
                                                     str(target_atom['x']),
                                                     str(target_atom['y']),
                                                     str(target_atom['z']),
@@ -647,7 +679,7 @@ def generate_molecule_data(root_dir):
                                                     if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
                                                         distance = calculate_distance(target_atom, target_atom2)
 
-                                                        if target_atom['c_CMP_PE_sp'] != 0 and distance <= 2:
+                                                        if target_atom['c_CMP_PE'] != 0 and distance <= 2:
                                                             ids_target.append(target_atom['id'])
                                                             csv_writer.writerow([
                                                                 file_name,
@@ -656,10 +688,10 @@ def generate_molecule_data(root_dir):
                                                                 str(target_atom['id']),
                                                                 str(target + ': ' + target_atom2['id']),
                                                                 str(distance),
-                                                                str(target_atom['c_CMP_PE_sp']),
-                                                                str(target_atom2['c_CMP_PE_sp']),
-                                                                str(target_atom['c_CMP_KE_sp']),
-                                                                str(target_atom2['c_CMP_KE_sp']),
+                                                                str(target_atom['c_CMP_PE']),
+                                                                str(target_atom2['c_CMP_PE']),
+                                                                str(target_atom['c_CMP_KE']),
+                                                                str(target_atom2['c_CMP_KE']),
                                                                 str(target_atom['x']),
                                                                 str(target_atom['y']),
                                                                 str(target_atom['z']),
@@ -680,7 +712,7 @@ def generate_molecule_data(root_dir):
                                             if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
                                                 distance = calculate_distance(target_atom, target_atom2)
 
-                                                if target_atom['c_CMP_PE_sp'] != 0 and distance <= 3:
+                                                if target_atom['c_CMP_PE'] != 0 and distance <= 3:
                                                     ids_target.append(target_atom['id'])
                                                     csv_writer.writerow([
                                                         file_name,
@@ -689,10 +721,10 @@ def generate_molecule_data(root_dir):
                                                         str(target_atom['id']),
                                                         str(target + ': ' + target_atom2['id']),
                                                         str(distance),
-                                                        str(target_atom['c_CMP_PE_sp']),
-                                                        str(target_atom2['c_CMP_PE_sp']),
-                                                        str(target_atom['c_CMP_KE_sp']),
-                                                        str(target_atom2['c_CMP_KE_sp']),
+                                                        str(target_atom['c_CMP_PE']),
+                                                        str(target_atom2['c_CMP_PE']),
+                                                        str(target_atom['c_CMP_KE']),
+                                                        str(target_atom2['c_CMP_KE']),
                                                         str(target_atom['x']),
                                                         str(target_atom['y']),
                                                         str(target_atom['z']),
@@ -723,7 +755,7 @@ def generate_molecule_data(root_dir):
                                         if ion_atom1 != ion_atom2 and ion_atom1['id'] not in ids_ion:
                                             distance = calculate_distance(ion_atom1, ion_atom2)
 
-                                            if ion_atom1['c_CMP_PE_sp'] != 0 and ion_atom2['c_CMP_PE_sp'] == ion_atom1['c_CMP_PE_sp'] and distance <= 1:
+                                            if ion_atom1['c_CMP_PE'] != 0 and ion_atom2['c_CMP_PE'] == ion_atom1['c_CMP_PE'] and distance <= 1:
                                                 ids_ion.append(ion_atom2['id'])
                                                 csv_writer.writerow([
                                                     file_name,
@@ -731,10 +763,10 @@ def generate_molecule_data(root_dir):
                                                     str(ion_atom1['id']),
                                                     str(ion_atom2['id']),
                                                     str(distance),
-                                                    str(ion_atom1['c_CMP_PE_sp']),
-                                                    str(ion_atom2['c_CMP_PE_sp']),
-                                                    str(ion_atom1['c_CMP_KE_sp']),
-                                                    str(ion_atom2['c_CMP_KE_sp']),
+                                                    str(ion_atom1['c_CMP_PE']),
+                                                    str(ion_atom2['c_CMP_PE']),
+                                                    str(ion_atom1['c_CMP_KE']),
+                                                    str(ion_atom2['c_CMP_KE']),
                                                     str(ion_atom1['x']),
                                                     str(ion_atom1['y']),
                                                     str(ion_atom1['z']),
@@ -758,14 +790,16 @@ def generate_molecule_data(root_dir):
 
                                 for atom in timestep['atoms']:
 
-                                    if atom['element'] == f'{ion}' and float(atom['c_CMP_PE_sp']) == 0 and atom['id'] not in ids_ion:
+                                    if atom['element'] == f'{ion}' and float(atom['c_CMP_PE']) == 0 and atom['id'] not in ids_ion:
+                                        angle = escape_angle(atom['vx'], atom['vy'], atom['vz'])
                                         ids_ion.append(atom['id'])
                                         csv_writer.writerow([
                                             file_name,
                                             str(timestep['time']),
                                             str(atom['id']),
-                                            str(atom['c_CMP_PE_sp']),
-                                            str(atom['c_CMP_KE_sp']),
+                                            str(atom['c_CMP_PE']),
+                                            str(atom['c_CMP_KE']),
+                                            str(angle),
                                             str(atom['vx']),
                                             str(atom['vy']),
                                             str(atom['vz'])
@@ -925,7 +959,7 @@ def generate_molecule_data(root_dir):
                                                                                                                                 row[f'Vx_{ion}'], row[f'Vy_{ion}'], row[f'Vz_{ion}'], 
                                                                                                                                 mass_target, row[f'KE {ion}'], row[f'PE {ion}'], 
                                                                                                                                 total_mass, row['Bond length'], Nu_e_tt, r0_tt, D0_tt)
-
+                angle = escape_angle(Vcom_x, Vcom_y, Vcom_z)
                 molecule = f'{target}{len(target_id) + len(ion_id)}'
                 id_molecule = f'{target_id} and {ion_id}'
 
@@ -934,6 +968,7 @@ def generate_molecule_data(root_dir):
                                 row['Time'],
                                 id_molecule,
                                 molecule,
+                                angle,
                                 KE_tot,
                                 KE_com,
                                 KE_rot,
@@ -941,13 +976,7 @@ def generate_molecule_data(root_dir):
                                 E_vib,
                                 J,
                                 n,
-                                Vcom,
-                                Vcom_x,
-                                Vcom_y,
-                                Vcom_z,
-                                COMx,
-                                COMy,
-                                COMz
+                                Vcom
                                 ])            
 
             else:
@@ -960,7 +989,7 @@ def generate_molecule_data(root_dir):
                                                                                                                                 row[f'Vx_{ion}'], row[f'Vy_{ion}'], row[f'Vz_{ion}'], 
                                                                                                                                 mass_ion, row[f'KE {ion}'], row[f'PE {ion}'], 
                                                                                                                                 total_mass, row['Bond length'], Nu_e_it, r0_it, D0_it)
-
+                angle = escape_angle(Vcom_x, Vcom_y, Vcom_z)
                 molecule = f'{target}{len(target_id)}{ion}{len(ion_id)}'
                 id_molecule = f'{target_id} and {ion_id}'
 
@@ -969,6 +998,7 @@ def generate_molecule_data(root_dir):
                                 row['Time'],
                                 id_molecule,
                                 molecule,
+                                angle,
                                 KE_tot,
                                 KE_com,
                                 KE_rot,
@@ -976,13 +1006,7 @@ def generate_molecule_data(root_dir):
                                 E_vib,
                                 J,
                                 n,
-                                Vcom,
-                                Vcom_x,
-                                Vcom_y,
-                                Vcom_z,
-                                COMx,
-                                COMy,
-                                COMz
+                                Vcom
                                 ])
 
         # Create a DataFrame for center of mass data
@@ -990,6 +1014,7 @@ def generate_molecule_data(root_dir):
                                                     'Time',
                                                     'ID',
                                                     'Molecule',
+                                                    'escape angle',
                                                     'KE_tot',
                                                     'KE_com',
                                                     'KE_rot',
@@ -997,13 +1022,7 @@ def generate_molecule_data(root_dir):
                                                     'E_vib',
                                                     'Rot quantum #',
                                                     'Vib quantum #',
-                                                    'Vcom', 
-                                                    'Vcom_x',
-                                                    'Vcom_y',
-                                                    'Vcom_z',
-                                                    'COMx',
-                                                    'COMy',
-                                                    'COMz'
+                                                    'Vcom'
                                                     ])
 
         # Write the result to the output CSV file
@@ -1015,14 +1034,14 @@ def generate_molecule_data(root_dir):
             rovib_target = pd.read_csv(diatomic_output)
 
             # Columns to average
-            columns_to_average = ["Rot quantum #", "Vib quantum #"]
+            columns_to_average = ["escape angle", "KE_tot", "KE_com", "KE_rot", "KE_vib", "E_vib", "Rot quantum #", "Vib quantum #", "Vcom"]
 
             # Group by 'Dump File' and 'ID', and compute the mean for numeric columns
             grouped_rovib = rovib_target.groupby(['Dump File', 'ID'])
 
             # Compute the mean for the rotational and vibrational quantum numbers
             averaged = grouped_rovib[columns_to_average].mean()
-            averaged = averaged.round(0)
+            averaged[["Rot quantum #", "Vib quantum #"]] = averaged[["Rot quantum #", "Vib quantum #"]].round(0)
 
             # Extract the last row of each group for all other columns
             last_rows = grouped_rovib.last()
@@ -1053,7 +1072,7 @@ def generate_molecule_data(root_dir):
                                                                                                                         row[f'Vx_{ion}2'], row[f'Vy_{ion}2'], row[f'Vz_{ion}2'], 
                                                                                                                         mass_ion, row[f'KE {ion}2'], row[f'PE {ion}2'], 
                                                                                                                         total_mass, row['Bond length'], Nu_e_ii, r0_ii, D0_ii)
-
+        angle = escape_angle(Vcom_x, Vcom_y, Vcom_z)
         molecule = f'{ion}{len(ion_id1) + len(ion_id2)}'
         id_ion = f'{ion_id1} and {ion_id2}'
 
@@ -1062,6 +1081,7 @@ def generate_molecule_data(root_dir):
                          row['Time'],
                          id_ion,
                          molecule,
+                         angle,
                          KE_tot,
                          KE_com,
                          KE_rot,
@@ -1069,13 +1089,7 @@ def generate_molecule_data(root_dir):
                          E_vib,
                          J,
                          n,
-                         Vcom,
-                         Vcom_x,
-                         Vcom_y,
-                         Vcom_z,
-                         COMx,
-                         COMy,
-                         COMz
+                         Vcom
                         ])
 
     # Create a DataFrame for center of mass data
@@ -1083,6 +1097,7 @@ def generate_molecule_data(root_dir):
                                                  'Time',
                                                  f'ID_{ion}',
                                                  'Molecule',
+                                                 'escape angle',
                                                  'KE_tot',
                                                  'KE_com',
                                                  'KE_rot',
@@ -1090,13 +1105,7 @@ def generate_molecule_data(root_dir):
                                                  'E_vib',
                                                  'Rot quantum #',
                                                  'Vib quantum #',
-                                                 'Vcom', 
-                                                 'Vcom_x',
-                                                 'Vcom_y',
-                                                 'Vcom_z',
-                                                 'COMx',
-                                                 'COMy',
-                                                 'COMz'
+                                                 'Vcom'
                                                 ])
 
     # Write the result to the output CSV file
@@ -1104,18 +1113,18 @@ def generate_molecule_data(root_dir):
 
     if r0_ii != 0:
 
-        final_rovib_ion =  os.path.join(root_dir, "final_rovib_ion.csv")  # Replace with your desired output file path
+        final_rovib_ion =  os.path.join(root_dir, "final_rovib_ion.csv")
         rovib_ion = pd.read_csv(output_molecule_ion)
 
         # Columns to average
-        columns_to_average = ["Rot quantum #", "Vib quantum #"]
+        columns_to_average = ["escape angle", "KE_tot", "KE_com", "KE_rot", "KE_vib", "E_vib", "Rot quantum #", "Vib quantum #", "Vcom"]
 
         # Group by 'Dump File' and 'ID', and compute the mean for numeric columns
-        grouped_rovib = rovib_ion.groupby(['Dump File', 'ID'])
+        grouped_rovib = rovib_ion.groupby(['Dump File', 'ID_D'])
 
         # Compute the mean for the rotational and vibrational quantum numbers
         averaged = grouped_rovib[columns_to_average].mean()
-        averaged = averaged.round(0)
+        averaged[["Rot quantum #", "Vib quantum #"]] = averaged[["Rot quantum #", "Vib quantum #"]].round(0)
 
         # Extract the last row of each group for all other columns
         last_rows = grouped_rovib.last()
@@ -1124,7 +1133,7 @@ def generate_molecule_data(root_dir):
         rovib = last_rows.copy()
         rovib[columns_to_average] = averaged
 
-            # Save the result to a new CSV file
+        # Save the result to a new CSV file
         rovib.reset_index().to_csv(final_rovib_ion, index=False)
 
 """ Function to calculate the type and number of sputtered species"""
@@ -1152,7 +1161,7 @@ def sputtered_species(name, root_dir):
         for E_dir in os.listdir(root_dir):
             E_path = os.path.join(root_dir, E_dir)
             if os.path.isdir(E_path) and E_dir.startswith(f'{ion}'):
-                energy = int(E_dir[len(ion):])  # Extract energy value as integer
+                energy = float(E_dir[len(ion):])  # Extract energy value as integer
                 energiez.append(energy)
                 energiez.sort()
                 folder_path = os.path.join(E_path, 'Target_molecules.csv')
@@ -1213,7 +1222,7 @@ def process_directory(name, dire, ion):
         for energy_dir in os.listdir(dire):
             energy_path = os.path.join(dire, energy_dir)
             if os.path.isdir(energy_path) and energy_dir.startswith(f'{ion}'):
-                energy = int(energy_dir[len(ion):])  # Extract energy value as integer
+                energy = float(energy_dir[len(ion):])  # Extract energy value as integer
                 energies.add(energy)
                 sputtered_file = os.path.join(energy_path, 'sputtered.data')
                 event_file = os.path.join(energy_path, 'event.csv')
