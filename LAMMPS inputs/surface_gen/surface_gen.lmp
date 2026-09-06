@@ -1,0 +1,163 @@
+# -----------------------------
+# SYSTEM INITIALIZATION
+# -----------------------------
+units           metal
+boundary        p p p
+atom_style      atomic
+
+read_data       W.data
+
+# Center simulation cell
+change_box all x delta $(-lx/2) $(-lx/2) y delta $(-ly/2) $(-ly/2) z delta $(-lz) $(-lz)
+
+# -----------------------------
+# INTERATOMIC POTENTIAL
+# -----------------------------
+pair_style      tersoff/zbl
+pair_coeff      * * WD.tersoff.zbl W D
+
+# -----------------------------
+# ENERGY MINIMIZATION
+# -----------------------------
+fix             RELAX all box/relax x 0.0 y 0.0 z 0.0
+min_style       cg
+minimize        1e-25 1e-25 10000 15000
+unfix           RELAX
+minimize        1e-25 1e-25 10000 15000
+
+# -----------------------------
+# INITIAL VELOCITIES
+# -----------------------------
+velocity        all create ${T} ${seed} rot yes mom yes dist gaussian
+
+timestep        ${dt}
+
+# -----------------------------
+# OUTPUT DEFINITIONS
+# -----------------------------
+compute         PE_ATOM all pe/atom
+
+dump            DUMP_MIN all custom 1000 W.minimized.lammpstrj id element type x y z vx vy vz c_PE_ATOM
+dump_modify     DUMP_MIN element W D
+
+# redirect thermo output to separate file, CSV format
+variable TIME   equal time
+variable STEP   equal step
+variable DT     equal dt
+variable TEMP   equal temp
+variable VOL    equal vol
+variable LX     equal lx
+variable LY     equal ly
+variable LZ     equal lz
+variable PRESS  equal press
+variable PXX    equal pxx
+variable PYY    equal pyy
+variable PZZ    equal pzz
+variable PE     equal pe
+variable KE     equal ke
+variable ETOTAL equal etotal
+
+fix PRINT_THERMO all print 100 "${TIME},${STEP},${DT},${TEMP},${VOL},${LX},${LY},${LZ},${PRESS},${PXX},${PYY},${PZZ},${PE},${KE},${ETOTAL}" screen no file W.minimized.csv title "time,timestep,dt,temp,vol,lx,ly,lz,press,pxx,pyy,pzz,pe,ke,etotal"
+
+# -----------------------------
+# EQUILIBRATION (NPT)
+# -----------------------------
+fix             NVE_INT all nve
+fix             TEMP_CTRL all temp/berendsen ${T} ${T} $(dt*100.0)
+fix             PRES_CTRL all press/berendsen iso ${P} ${P} $(dt*1000.0) modulus 3100000
+
+variable        NSTEPS equal ceil(${Time}/${dt})
+run             ${NSTEPS}
+
+# Remove barostat before surface creation
+unfix           PRES_CTRL
+unfix           NVE_INT
+
+# -----------------------------
+# SURFACE CREATION
+# -----------------------------
+change_box      all z delta 0.0 80 boundary p p f units box
+
+# Region definitions
+region          ALL   block INF INF INF INF INF INF units box
+region          SOLID block INF INF INF INF INF 0   units box
+region          VAC   intersect 2 ALL SOLID side out
+
+region          LOCK  block INF INF INF INF INF $(zlo + 4) units box
+region          NVE_R intersect 2 ALL LOCK side out
+
+region          BULK  block $(xlo + 5) $(xhi - 5) $(ylo + 5) $(yhi - 5) $(zlo + 9) 0 units box
+
+region          BOUND union 3 VAC LOCK BULK side out
+
+# Groups
+group           G_LOCK region LOCK
+group           G_NVE  region NVE_R
+
+group           G_VAC   dynamic all region VAC
+group           G_BULK  dynamic all region BULK
+group           G_BOUND dynamic all region BOUND
+
+# Tagging atoms
+variable        IN_VAC   atom gmask(G_VAC)
+variable        IN_BULK  atom gmask(G_BULK)
+variable        IN_BOUND atom gmask(G_BOUND)
+variable        IN_LOCK  atom gmask(G_LOCK)
+variable        IN_NVE   atom gmask(G_NVE)
+
+dump            DUMP_GROUP all custom 1000 W_groups.eq_${T}.lammpstrj id element type x y z v_IN_VAC v_IN_BULK v_IN_BOUND v_IN_LOCK v_IN_NVE
+dump_modify     DUMP_GROUP element W D
+
+# -----------------------------
+# SURFACE EQUILIBRATION (NVT-like)
+# -----------------------------
+fix             NVE_SURF G_NVE nve
+run             ${NSTEPS}
+unfix           NVE_SURF
+
+# -----------------------------
+# D ATOM DEPOSITION
+# -----------------------------
+region          SURF block $(xlo) $(xhi) $(ylo) $(yhi) -62 -0.7 units box
+group           D type 2
+group           W type 1
+
+fix             DEPOSIT D deposit 15680 2 1 ${seed} region SURF near 1.5 units box
+
+thermo_modify   lost warn
+neigh_modify    delay 1
+
+run             35000
+minimize        1e-25 1e-25 10000 15000
+
+# Cleanup deposition fixes
+unfix           DEPOSIT
+undump          DUMP_MIN
+undump          DUMP_GROUP
+
+# -----------------------------
+# FINAL RELAXATION
+# -----------------------------
+reset_timestep  0 
+dump            Final all custom 1000 W_final.eq_${T}.lammpstrj id element type x y z v_IN_VAC v_IN_BULK v_IN_BOUND v_IN_LOCK v_IN_NVE
+dump_modify     Final element W D
+
+# Adaptive timestep
+fix             DT_RESET all dt/reset 1 NULL 0.0005 0.01 units box
+
+group           NVE region NVE_R
+fix             NVE_SURF_2 NVE nve
+fix             HALT all halt 1 v_TIME > 200 error soft message yes
+run             20000000
+
+# -----------------------------
+# OUTPUT
+# -----------------------------
+unfix           NVE_SURF_2
+unfix           TEMP_CTRL
+unfix           PRINT_THERMO
+unfix           DT_RESET
+unfix           HALT
+
+write_restart   W1D1_open.eq_${T}.restart
+write_data      W1D1_open.eq_${T}.data

@@ -1,0 +1,176 @@
+# import content of restart file
+read_restart W1D1_open.eq_300.restart
+reset_timestep 0
+
+# load potential file
+pair_style tersoff/zbl
+pair_coeff * * WD.tersoff.zbl W D
+
+# length of the box
+variable lx equal lx
+variable ly equal ly
+
+# Generate random displacements in x and y directions
+variable dx equal ${lx}*${shiftx} 
+variable dy equal ${ly}*${shifty} 
+
+# Displace the simulation box by the random amounts in x and y directions
+displace_atoms all move v_dx v_dy 0 units box
+change_box all boundary p p f
+
+# spawn single ion
+variable x equal $(xhi + xlo)/2
+variable y equal $(yhi + ylo)/2
+variable z equal 20
+create_atoms 2 single ${x} ${y} ${z} units box
+
+# whole cell
+region REG_ALL block INF INF INF INF INF INF units box
+
+# only solid portion (some Angstrom above 0, to capture surface atoms)
+region REG_SOLID block INF INF INF INF INF 13 units box
+
+# vacuum is logical NOT of intersection of "all" and "solid" (see "side out")
+region REG_VAC intersect 2 REG_ALL REG_SOLID side out
+
+# locked region at the bottom
+region REG_LOCK block INF INF INF INF INF $(zlo + 4) units box
+
+# everything but the locked region is integrated by NVE
+region REG_NVE intersect 2 REG_ALL REG_LOCK side out
+
+# bulk is defined from boundary thickness
+region BULK  block $(xlo + 5) $(xhi - 5) $(ylo + 5) $(yhi - 5) $(zlo + 9) 13 units box
+
+# boundary is then defined as everything but vacuum, lock and bulk
+region REG_BOUND union 3 REG_VAC REG_LOCK REG_BULK side out
+
+group GRP_VAC    dynamic all region REG_VAC
+group GRP_BULK   dynamic all region REG_BULK
+group GRP_BOUND  dynamic all region REG_BOUND
+group GRPST_NVE  dynamic all region REG_NVE
+group GRPST_LOCK region  REG_LOCK
+
+# group by type
+region ion block $(v_x-3) $(v_x+3) $(v_y-3) $(v_y+3) $(v_z-3) $(v_z+3)
+group GRP_TARGET type   1
+group GRP_ION    region ion
+group GRP_N      type   2
+
+# define custom time and step, as it is used in all simulations
+variable TIME equal time
+variable STEP equal step
+
+# NVE integrator works on moving (= everything but fixed) region
+fix FIX_NVE GRPST_NVE nve
+
+# Berendsen NVT on boundary
+fix FIX_BOUND GRP_BOUND temp/berendsen ${T} ${T} $(dt*100.0)
+
+# electronic stopping
+fix FIX_ELSTOP all electron/stopping 1.0 elstop-DW.txt minneigh 5
+
+# set two control regions
+region REG_CONTROL_1   block INF INF INF INF 20 21 units box
+region REG_CONTROL_GAP block INF INF INF INF 21 22 units box
+region REG_CONTROL_2   block INF INF INF INF 22 32 units box
+region WHOLE_CONTROL   union 3 REG_CONTROL_1 REG_CONTROL_2 REG_CONTROL_GAP
+
+# define dynamic groups based on control regions
+group GRP_CONTROL dynamic all region REG_CONTROL_2
+
+group GRP_CONTROL_1   dynamic GRP_TARGET region REG_CONTROL_1
+group GRP_CONTROL_2   dynamic GRP_TARGET region REG_CONTROL_2
+group GRP_CONTROL_GAP dynamic GRP_TARGET region REG_CONTROL_GAP
+
+group GRP_N_CONTROL_1   dynamic GRP_N region REG_CONTROL_1
+group GRP_N_CONTROL_2   dynamic GRP_N region REG_CONTROL_2
+group GRP_N_CONTROL_GAP dynamic GRP_N region REG_CONTROL_GAP
+
+group GRP_WHOLE_CONTROL dynamic all region WHOLE_CONTROL
+
+group GRP_CONTROL_ION dynamic GRP_ION region REG_CONTROL_2
+
+# count atoms in control regions
+variable COUNT_CONTROL       equal count(GRP_CONTROL)
+variable COUNT_CONTROL_1     equal count(GRP_CONTROL_1)
+variable COUNT_CONTROL_2     equal count(GRP_CONTROL_2)
+variable COUNT_CONTROL_GAP   equal count(GRP_CONTROL_GAP)
+variable COUNT_CONTROL_ION   equal count(GRP_CONTROL_ION)
+variable COUNT_N_CONTROL_1   equal count(GRP_N_CONTROL_1)
+variable COUNT_N_CONTROL_2   equal count(GRP_N_CONTROL_2)
+variable COUNT_N_CONTROL_GAP equal count(GRP_N_CONTROL_GAP)
+
+# thermo data
+compute CMP_TEMP_BULK GRP_BULK      temp
+compute CMP_PE        all           pe/atom
+compute CMP_KE        all           ke/atom
+compute CMP_KE_ION    GRP_ION       reduce sum c_CMP_KE
+compute CMP_KE_sputt  GRP_CONTROL_2 reduce sum c_CMP_KE
+compute CMP_PE_sputt  GRP_CONTROL_2 reduce sum c_CMP_PE
+
+variable ke_sputt   equal   c_CMP_KE_sputt
+variable pe_sputt   equal   c_CMP_PE_sputt
+variable KE_ION     equal   c_CMP_KE_ION
+variable TEMP       equal   temp
+variable TEMP_BULK  equal   c_CMP_TEMP_BULK
+variable PRESS      equal   press
+variable PE         equal   pe
+variable KE         equal   ke
+variable ELSTOP     equal   f_FIX_ELSTOP
+variable Z          atom    z
+variable VZ         atom    vz
+compute  CMP_Z_ION  GRP_ION reduce sum v_Z
+compute  CMP_VZ_ION GRP_ION reduce sum v_VZ
+variable Z_ION      equal   c_CMP_Z_ION
+variable VZ_ION     equal   c_CMP_VZ_ION
+
+#print csv of thermo data and atom count in regions 1 and 2
+fix THERMO all print 40 "${TIME}, ${STEP}, ${TEMP}, ${TEMP_BULK}, ${PRESS}, ${PE}, ${KE}, ${KE_ION}, ${Z_ION}, ${ELSTOP}, ${COUNT_CONTROL_1}, ${COUNT_CONTROL_2}, ${ke_sputt}, ${pe_sputt}, ${rid}" screen no file control.${i}.csv title "time, step, temp, temp_bulk, press, pe, ke, ke_ion, z_ion, elstop, c1, c2, ke_sputtered, pe_sputtered, rid"
+
+# add periodic dump
+variable IN_VAC    atom gmask(GRP_VAC)
+variable IN_BULK   atom gmask(GRP_BULK)
+variable IN_BOUND  atom gmask(GRP_BOUND)
+variable IN_LOCK   atom gmask(GRPST_LOCK)
+variable IN_NVE    atom gmask(GRPST_NVE)
+variable IN_ION    atom gmask(GRP_ION)
+variable IN_TARGET atom gmask(GRP_TARGET)
+
+variable dump_skip equal "(v_COUNT_CONTROL == 0)"
+dump 1 GRP_CONTROL custom 1 control.${i}.txt id element type x y z vx vy vz c_CMP_KE c_CMP_PE
+dump_modify 1 element W D
+dump_modify 1 time yes
+dump_modify 1 skip v_dump_skip
+
+# make sure to comment the following 2 lines in production runs
+dump        DUMP_GROUPS all custom 100 control.lammpstrj id element type x y z c_CMP_PE c_CMP_KE v_IN_VAC v_IN_BULK v_IN_BOUND v_IN_LOCK v_IN_NVE v_IN_ION v_IN_TARGET
+dump_modify DUMP_GROUPS element W D first yes
+
+# variable time step (NULL removes constraint on minimum size)
+fix FIX_VAR_TIMESTEP all dt/reset 1 NULL 0.0005 0.01 units box
+
+# set sputtered exit condition
+# (no target atoms in or between control regions, time > var_step_total)
+variable EXIT_SPUTTER equal "(v_COUNT_CONTROL_1 == 0) && (v_COUNT_CONTROL_2 == 0) && (v_COUNT_CONTROL_GAP == 0) && (v_TIME > 3)"
+
+# auto halt if exit condition on sputtered particles is met
+fix FIX_HALT_EXIT_SPUTTER all halt 1 v_EXIT_SPUTTER > 0 error soft message yes
+
+# auto halt after target time (check every VAR_STEP_REFRESH_FREQ)
+fix FIX_HALT_TIME all halt 1 v_TIME > 10 error soft message yes
+
+# set ion initial velocity
+velocity GRP_ION set ${vx} ${vy} ${vz} units box
+
+# reduce neighbor list rebuild delay
+neigh_modify delay 1
+
+# run irradiation simulation
+run 1
+
+group GRP_BULK static
+group GRP_BOUND static
+group GRPST_NVE static
+
+run 1000000
