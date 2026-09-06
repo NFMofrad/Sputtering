@@ -27,9 +27,9 @@ energy/angle set.
   ```
   (install via the top-level `LAMMPS inputs/requirements.txt`, or `pip
   install numpy pandas periodictable`).
-- `WD.tersoff.zbl` from `../../potentials/`, copied into the run directory.
+- `WD.tersoff.zbl` from `../../potentials/`.
 - `W1D1_open.eq_300.restart`, produced by `../surface_gen/surface_gen.lmp`
-  (see that folder's README) — must be present in the run directory.
+  (see that folder's README).
 
 ## Step 1 — generate impact conditions
 
