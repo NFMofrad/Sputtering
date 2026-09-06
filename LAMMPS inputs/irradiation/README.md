@@ -67,7 +67,7 @@ command line, one set per impact:
 | `i` | `run_id` (used to name `control.${i}.csv`) |
 | `rid` | `run_id` (logged in the thermo CSV) |
 
-A minimal loop (e.g. `run_batch.sh`) would look like:
+A minimal bash (e.g. `run_batch.sh`) would look like:
 
 ```bash
 #!/usr/bin/env bash
