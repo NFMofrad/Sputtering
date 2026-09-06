@@ -1,25 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 import os
-import glob
 import csv
 import json
 import math
 import sys
-import shutil
 import numpy as np
 import pandas as pd
 import re
 import periodictable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-import warnings
-
-""" Turning of this warning: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. 
-    This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation.
-    Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
-    final_df = modified_df.groupby('Dump File').apply(process_molecule_target_2).reset_index(drop=True) """
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Planck's constant
 h_eV = 4.1357e-15     # Planck's constant (eV·s)
@@ -28,86 +19,13 @@ h_bar = hbar * 6.022e34 # planck's constant/2pi (amu.Å^2.ps^-1)
 
 # Vibrational frequency and bond length data from Tersoff potentials
 vibrational_data = {
-    ('Be', 'H'): {'Nu_e_it': 8.61964e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
-    ('Be', 'D'): {'Nu_e_it': 6.39396e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
-    ('Be', 'T'): {'Nu_e_it': 5.45722e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
-    #('B', 'W') : {'Nu_e_it': 3.20960e13, 'r0_it': 1.4707, 'D0_it': 0.000000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.56530, 'D0_tt': 0.00000, 'Nu_e_ii': 6.02760e12, 'r0_ii': 2.06120, 'D0_ii': 0.0000}, # Antoine's potential
-    ('B', 'Ar'): {'Nu_e_it': 0.00000000, 'r0_it': 0.0000, 'D0_it': 0.000, 'Nu_e_tt': 3.00500e13, 'r0_tt': 1.51509, 'D0_tt': 3.74655, 'Nu_e_ii': 0.00000000, 'r0_ii': 0.00000, 'D0_ii': 0.0000}, # Antoine's potential
-    ('W', 'H') : {'Nu_e_it': 5.58144e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 4.14678e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
-    ('W', 'D') : {'Nu_e_it': 3.95741e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 2.93221e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
-    ('W', 'T') : {'Nu_e_it': 3.24259e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 2.39414e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
+    ('Be', 'H'): {'Nu_e_it': 8.61964e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 1.32063e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
+    ('Be', 'D'): {'Nu_e_it': 6.39396e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 0.93382e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
+    ('Be', 'T'): {'Nu_e_it': 5.45722e13, 'r0_it': 1.3380, 'D0_it': 2.600, 'Nu_e_tt': 1.44275e13, 'r0_tt': 2.03500, 'D0_tt': 1.17000, 'Nu_e_ii': 0.76246e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Carolina's potential
+    ('W', 'H'): {'Nu_e_it': 5.58144e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 1.32063e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
+    ('W', 'D'): {'Nu_e_it': 3.95741e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 0.93382e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
+    ('W', 'T'): {'Nu_e_it': 3.24259e13, 'r0_it': 1.7270, 'D0_it': 2.748, 'Nu_e_tt': 7.43982e12, 'r0_tt': 2.34095, 'D0_tt': 5.41861, 'Nu_e_ii': 0.76246e14, 'r0_ii': 0.74144, 'D0_ii': 4.7509}, # Juslin's potential
 }
-
-# Take target and ion as input, capitalize for consistency
-target = input("Enter the target element symbol (e.g., 'B'): ").strip().capitalize()
-ion = input("Enter the ion element symbol (e.g., 'W'): ").strip().capitalize()
-
-# Retrieve atomic masses
-try:
-    mass_target = getattr(periodictable, target).mass
-    mass_ion = getattr(periodictable, ion).mass
-    print(f"\n\033[32mMass of {target}: {mass_target} u\033[0m")
-    print(f"\033[32mMass of {ion}: {mass_ion} u\n\033[0m")
-except AttributeError:
-    print("\033[31m\nOne or both element symbols are invalid. Please check your input. u\033[0m")
-    sys.exit(1)
-
-### Get vibrational data
-key = (target, ion) if (target, ion) in vibrational_data else (ion, target)
-data = vibrational_data.get(key, None)
-
-if data:
-    # Swap the values dynamically if the key order is reversed
-    if key != (target, ion):
-        Nu_e_tt, r0_tt, D0_tt = data['Nu_e_ii'], data['r0_ii'], data['D0_ii']
-        Nu_e_it, r0_it, D0_it = data['Nu_e_it'], data['r0_it'], data['D0_it']
-        Nu_e_ii, r0_ii, D0_ii = data['Nu_e_tt'], data['r0_tt'], data['D0_tt']
-    else:
-        Nu_e_it, r0_it, D0_it = data['Nu_e_it'], data['r0_it'], data['D0_it']
-        Nu_e_tt, r0_tt, D0_tt = data['Nu_e_tt'], data['r0_tt'], data['D0_tt']
-        Nu_e_ii, r0_ii, D0_ii = data['Nu_e_ii'], data['r0_ii'], data['D0_ii']
-
-    print(f"\033[32mVibrational data for {ion}->{target}:\033[0m")
-    print(f"\033[32m  Nu_e_it = {Nu_e_it:.5e} Hz, r0_it = {r0_it:.5e}, D0_it = {D0_it:.5e} eV\033[0m")
-    print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.5e} Hz, r0_tt = {r0_tt:.5e}, D0_tt = {D0_tt:.5e} eV\033[0m")
-    print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.5e} Hz, r0_ii = {r0_ii:.5e}, D0_ii = {D0_ii:.5e} eV\033[0m")
-else:
-    Nu_e_tt, r0_tt = 0, 0
-    Nu_e_it, r0_it = 0, 0
-    Nu_e_ii, r0_ii = 0, 0
-    print(f"\033[32mNo vibrational data found for {ion}->{target}:\033[0m")
-    print(f"\033[32m  Nu_e_it = {Nu_e_it:.1e} Hz, r0_it = {r0_it:.1e}\033[0m")
-    print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.1e} Hz, r0_tt = {r0_tt:.1e}\033[0m")
-    print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.1e} Hz, r0_ii = {r0_ii:.1e}\033[0m")
-
-
-# Initialize an empty dictionary to store directories
-dirs = {}
-
-# Loop to allow user to input multiple directories
-while True:
-    # Take directory name input
-    dir_name = input("\nEnter the directory name (e.g., '300K-0deg') or type 'done' to start: ").strip()
-    
-    # Break the loop if the user is done
-    if dir_name.lower() == 'done':
-        break
-    
-    # Take the corresponding path input
-    dir_path = input(f"\nEnter the path for {dir_name}: ").strip()
-    
-    # Store the directory in the dictionary
-    dirs[dir_name] = dir_path
-
-# Print the directories to verify
-print("\n\033[32mDirectories entered:\033[0m")
-for dir_name, dir_path in dirs.items():
-    print(f"\033[32m{dir_name}: {dir_path}\033[0m")
-
-print("\033[32m\nRunning...\033[0m")
-
-# Creating the final json file for sputtering yield
-output_json = f'sputtering_yields_{ion}{target}.json'
 
 """ Function to count the total and physically sputtered atoms from the "sputtered.data" file """
 def count_sputtered_atoms(file_path):
@@ -149,7 +67,6 @@ def ingress_egress(fname):
             e1 = -diff1.loc[diff1 < 0].sum().astype("int32")
             e2 = -diff2.loc[diff2 < 0].sum().astype("int32")
             # no. of sputtered as minimum between ingress/egress counts
-            #sputtered = min(i1, i2, e1, e2)
             sputtered = min(i2, e2)
         # Get the value of the "seed"
         seed = df.iloc[-1, -1]
@@ -158,32 +75,42 @@ def ingress_egress(fname):
         print(f"\033[31m\nSkipping file {fname}: {e}\033[0m")
         return None
 
+""" Function to get the highest numbered simulation folder in root_dir (folder numbers may be non-contiguous) """
+def get_max_folder_number(root_dir):
+    numeric_dirs = [int(item) for item in os.listdir(root_dir) if item.isdigit() and os.path.isdir(os.path.join(root_dir, item))]
+    return max(numeric_dirs) if numeric_dirs else 0
+
+""" Function to list the .csv files in one simulation folder - runs in a thread, since directory listing on a network filesystem is I/O-bound and releases the GIL """
+def discover_csv_files(folder_path):
+    try:
+        with os.scandir(folder_path) as entries:
+            return [entry.path for entry in entries if entry.name.endswith('.csv') and entry.is_file()]
+    except FileNotFoundError:
+        return []
+
 """ Function to run ingress_egress for all simulations and generate the "event.csv" file """
 def run_ingress_egress(root_dir):
     # Number of cores to use for parallel processing
-    number_of_cores = 30
+    number_of_cores = os.cpu_count() or 1
+
+    # Discover all .csv files across simulation folders concurrently (I/O-bound filesystem scan - threads help despite the GIL)
+    folder_paths = [os.path.join(root_dir, str(i)) for i in range(1, get_max_folder_number(root_dir) + 1)]
+    with ThreadPoolExecutor(max_workers=min(64, len(folder_paths)) or 1) as scan_executor:
+        csv_file_lists = list(scan_executor.map(discover_csv_files, folder_paths))
+    all_csv_files = [file_path for csv_files in csv_file_lists for file_path in csv_files]
 
     # Create a ProcessPoolExecutor
     with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
-        results = []
-        for i in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
-            folder_path = os.path.join(root_dir, str(i))
-            # Find all .csv files in the folder
-            csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
+        results = [executor.submit(ingress_egress, file_path) for file_path in all_csv_files]
 
-            # Check if there are any .csv files and process them
-            for file_path in csv_files:
-                if os.path.exists(folder_path) and os.path.isfile(file_path):
-                    results.append(executor.submit(ingress_egress, file_path))
-
-    # Create a list of DataFrames for each folder's results
-    dfs = []
-    for future in results:
-        result = future.result()
-        if result:  # Skip None results
-            columns = ["rid", "i1", "i2", "e1", "e2", "sputtered", "event", "seed"]
-            df = pd.DataFrame([result], columns=columns)
-            dfs.append(df)
+        # Create a list of DataFrames for each folder's results
+        dfs = []
+        for future in results:
+            result = future.result()
+            if result:  # Skip None results
+                columns = ["rid", "i1", "i2", "e1", "e2", "sputtered", "event", "seed"]
+                df = pd.DataFrame([result], columns=columns)
+                dfs.append(df)
 
     # Concatenate the DataFrames into a single DataFrame if there are results
     if dfs:
@@ -212,14 +139,12 @@ def generate_sputtered_data(root_dir):
     df = pd.read_csv(input_file)
 
     # Filter rows where "sputtered" is non-zero
-    #non_zero_sputtered_df = df[df["sputtered"] != 0]
     non_zero_sputtered_df = df[df["event"] == True]
 
     # Extract the "rid" values corresponding to non-zero "sputtered"
     rid_values = non_zero_sputtered_df["rid"].tolist()
 
     # List to store rid_values where potential energy of sputtered target atom is not zero
-    global rids
     rids = []
     
     # Iterate through the RID values
@@ -322,6 +247,7 @@ def calculate_KE(m,v):
 
 """ Function to process each group of ID within a dump file to clean the polyatomic_target.csv file """
 def process_molecule_target_1(group):
+    dump_file = group.name
     # Reset the index for each ID group
     group = group.reset_index(drop=True)
 
@@ -339,11 +265,14 @@ def process_molecule_target_1(group):
 
         # Keep only the rows with repeated time steps
         selected_rows = group[group['Time Step'].isin(repeated_time_steps)]
-        
+
+    selected_rows = selected_rows.copy()
+    selected_rows.insert(0, 'Dump File', dump_file)
     return selected_rows
 
 """ Function to process each group of Dump File to clean the polyatomic_target.csv file """
 def process_molecule_target_2(group):
+    dump_file = group.name
     # Reset the index for each Dump File group
     group = group.reset_index(drop=True)
     
@@ -385,10 +314,12 @@ def process_molecule_target_2(group):
             a = 6
             selected_rows = group[group['Time Step'].isin(time_step_counts[time_step_counts == max_repeated_count].index)].head(a)
 
+    selected_rows = selected_rows.copy()
+    selected_rows.insert(0, 'Dump File', dump_file)
     return selected_rows
 
 """ Function to calculate translational, rotational, and vibrational kinetic energy """
-def kinetic_energy_analysis (x1, y1, z1, Vx1, Vy1, Vz1, m1, ke1, pe1, x2, y2, z2, Vx2, Vy2, Vz2, m2, ke2, pe2, total_mass, r, nu, r0, D0):
+def kinetic_energy_analysis(x1, y1, z1, Vx1, Vy1, Vz1, m1, ke1, pe1, x2, y2, z2, Vx2, Vy2, Vz2, m2, ke2, pe2, total_mass, r, nu, r0, D0):
         
     COMx = ((x1 * m1) + (x2 * m2)) / total_mass
     COMy = ((y1 * m1) + (y2 * m2)) / total_mass
@@ -409,21 +340,14 @@ def kinetic_energy_analysis (x1, y1, z1, Vx1, Vy1, Vz1, m1, ke1, pe1, x2, y2, z2
 
     v_rel1 = [Vx1 - Vcom_x, Vy1 - Vcom_y, Vz1 - Vcom_z]
     v_rel2 = [Vx2 - Vcom_x, Vy2 - Vcom_y, Vz2 - Vcom_z]
-    
-    #I1 = m1 * (np.dot(r1, r1) * np.identity(3) - np.outer(r1, r1))
-    #I2 = m2 * (np.dot(r2, r2) * np.identity(3) - np.outer(r2, r2))
-    #I = I1 + I2
 
     L1 = m1 * np.cross(r1, v_rel1)
     L2 = m2 * np.cross(r2, v_rel2)
 
     L = L1 + L2
-    
-    #omega = np.dot(np.linalg.pinv(I), L)
-    
+
     mu = ((m1 * m2) / (m1 + m2))
 
-    #KE_rot = 0.5 * np.dot(omega, np.dot(I, omega)) * 1.036427e-4
     KE_rot = ((1/(2*mu)) * (np.linalg.norm(L)/r)**2) * 1.036427e-4 #(converted to eV)
 
     KE_vib = KE_tot - KE_rot - KE_com
@@ -433,16 +357,14 @@ def kinetic_energy_analysis (x1, y1, z1, Vx1, Vy1, Vz1, m1, ke1, pe1, x2, y2, z2
 
     E_vib = KE_vib + PE_vib
 
-    if r0_it != 0:
-        #J_term = (2 * mu * (r0)**2 * KE_rot) / (h_bar**2) * 9.648e3
-        #J_temp = (-1 + np.sqrt(1 + 4 * J_term)) / 2  # Solve for J(J+1)
+    if r0 != 0:
         J_temp = float((-1 + np.sqrt(1 + (4 * (np.linalg.norm(L)/(h_bar))**2))) / 2)  # Solve for J(J+1)
         J = np.round(J_temp).astype(int)
         J = max(J, 0)
     else:
         J = '-'
 
-    if Nu_e_it != 0:
+    if nu != 0:
         n_temp = (E_vib) / (h_eV * nu) - 0.5
         n = np.round(n_temp).astype(int)
         if n >= 0:
@@ -452,7 +374,12 @@ def kinetic_energy_analysis (x1, y1, z1, Vx1, Vy1, Vz1, m1, ke1, pe1, x2, y2, z2
     else:
         n = '-'
 
-    return KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz
+    # Check collinearity (cross product ~ 0)
+    r1 = np.array([x1 - COMx, y1 - COMy, z1 - COMz])
+    r2 = np.array([x2 - COMx, y2 - COMy, z2 - COMz])
+    check = np.linalg.norm(np.cross(r1, r2)) < 1e-10
+
+    return KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz, check
 
 def escape_angle(Vx, Vy, Vz):
 
@@ -471,7 +398,232 @@ def escape_angle(Vx, Vy, Vz):
 
     return theta_deg
 
-""" Function to find the spettered molecules and single ions leaving the surface """
+""" Function to parse every dump file in one simulation folder (rid) and return the resulting rows, without touching any shared file - runs in a worker process """
+def process_rid_dump_files(rid, root_dir):
+    target_rows = []
+    ion_rows = []
+    single_ion_rows = []
+
+    ids_target = []
+    ids_ion    = []
+
+    # Generate the folder path for the corresponding RID
+    folder_path = os.path.join(root_dir, str(rid))
+
+    # Check if the folder exists
+    if os.path.exists(folder_path):
+        # Process each dump file in the folder
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith('.txt'):
+                file_path = os.path.join(folder_path, file_name)
+
+                # Read the dump file
+                with open(file_path, 'r') as file:
+                    lines = file.readlines()
+
+                # Initialize variables
+                timestep_data = []
+                current_timestep = {'timestep': None, 'time': None, 'atoms': []}
+                headers = None  # Initialize headers outside the loop
+
+                # Parse the dump file
+                iterator = iter(lines)
+                for line in iterator:
+                    if line.startswith("ITEM: TIMESTEP"):
+                        if current_timestep is not None:
+                            timestep_data.append(current_timestep)
+                        current_timestep['timestep'] = int(next(iterator, '').strip())  # Get the timestep from the next line
+
+                    elif line.startswith("ITEM: TIME"):
+                        current_timestep = {'timestep': None, 'time': None, 'atoms': []}
+                        try:
+                            time_line = next(iterator, '')
+                            if time_line is not None:
+                                current_timestep['time'] = float(time_line.strip())  # Get the time from the next line
+                            else:
+                                current_timestep['time'] = None
+                        except ValueError:
+                            current_timestep['time'] = None
+
+                    elif line.startswith("ITEM: ATOMS"):
+                        headers = line.split()[2:]
+                    elif headers is not None and not line.startswith("ITEM"):
+                        atom_data = line.split()
+
+                        # Ensure that the atom_data has the same length as headers
+                        if len(atom_data) == len(headers):
+                            atom = {headers[i]: float(atom_data[i]) if i >= 3 and atom_data[i].replace('.', '').isdigit() else atom_data[i] for i in range(len(headers))}
+                            current_timestep['atoms'].append(atom)
+
+                # Process Target_molecules.csv for target atoms
+                target_timesteps = [timestep for timestep in timestep_data if any(atom['element'] == f'{target}' for atom in timestep['atoms'])]
+
+                for timestep in target_timesteps:
+                    target_atoms = [atom for atom in timestep['atoms'] if atom['element'] == f'{target}']
+
+                    for target_atom in target_atoms:
+                        ion_atoms = [a for a in timestep['atoms'] if a['element'] == f'{ion}']
+
+                        if ion_atoms:
+                            for ion_atom in ion_atoms:
+                                distance = calculate_distance(target_atom, ion_atom)
+
+                                if target_atom['c_CMP_PE'] != 0 and distance <= 2 and float(ion_atom['c_CMP_PE']) > -2:
+                                    ids_target.append(target_atom['id'])
+                                    ids_ion.append(ion_atom['id'])
+                                    target_rows.append([
+                                        file_name,
+                                        str(timestep['timestep']),
+                                        str(timestep['time']),
+                                        str(target_atom['id']),
+                                        str(ion_atom['id']),
+                                        str(distance),
+                                        str(target_atom['c_CMP_PE']),
+                                        str(ion_atom['c_CMP_PE']),
+                                        str(target_atom['c_CMP_KE']),
+                                        str(ion_atom['c_CMP_KE']),
+                                        str(target_atom['x']),
+                                        str(target_atom['y']),
+                                        str(target_atom['z']),
+                                        str(ion_atom['x']),
+                                        str(ion_atom['y']),
+                                        str(ion_atom['z']),
+                                        str(target_atom['vx']),
+                                        str(target_atom['vy']),
+                                        str(target_atom['vz']),
+                                        str(ion_atom['vx']),
+                                        str(ion_atom['vy']),
+                                        str(ion_atom['vz'])
+                                    ])
+
+                                else:
+                                    for target_atom2 in target_atoms:
+
+                                        if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
+                                            distance = calculate_distance(target_atom, target_atom2)
+
+                                            if target_atom['c_CMP_PE'] != 0 and distance <= 2:
+                                                ids_target.append(target_atom['id'])
+                                                target_rows.append([
+                                                    file_name,
+                                                    str(timestep['timestep']),
+                                                    str(timestep['time']),
+                                                    str(target_atom['id']),
+                                                    str(target + ': ' + target_atom2['id']),
+                                                    str(distance),
+                                                    str(target_atom['c_CMP_PE']),
+                                                    str(target_atom2['c_CMP_PE']),
+                                                    str(target_atom['c_CMP_KE']),
+                                                    str(target_atom2['c_CMP_KE']),
+                                                    str(target_atom['x']),
+                                                    str(target_atom['y']),
+                                                    str(target_atom['z']),
+                                                    str(target_atom2['x']),
+                                                    str(target_atom2['y']),
+                                                    str(target_atom2['z']),
+                                                    str(target_atom['vx']),
+                                                    str(target_atom['vy']),
+                                                    str(target_atom['vz']),
+                                                    str(target_atom2['vx']),
+                                                    str(target_atom2['vy']),
+                                                    str(target_atom2['vz'])
+                                                ])
+
+                        else:
+                            for target_atom2 in target_atoms:
+
+                                if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
+                                    distance = calculate_distance(target_atom, target_atom2)
+
+                                    if target_atom['c_CMP_PE'] != 0 and distance <= 3:
+                                        ids_target.append(target_atom['id'])
+                                        target_rows.append([
+                                            file_name,
+                                            str(timestep['timestep']),
+                                            str(timestep['time']),
+                                            str(target_atom['id']),
+                                            str(target + ': ' + target_atom2['id']),
+                                            str(distance),
+                                            str(target_atom['c_CMP_PE']),
+                                            str(target_atom2['c_CMP_PE']),
+                                            str(target_atom['c_CMP_KE']),
+                                            str(target_atom2['c_CMP_KE']),
+                                            str(target_atom['x']),
+                                            str(target_atom['y']),
+                                            str(target_atom['z']),
+                                            str(target_atom2['x']),
+                                            str(target_atom2['y']),
+                                            str(target_atom2['z']),
+                                            str(target_atom['vx']),
+                                            str(target_atom['vy']),
+                                            str(target_atom['vz']),
+                                            str(target_atom2['vx']),
+                                            str(target_atom2['vy']),
+                                            str(target_atom2['vz'])
+                                        ])
+
+                # Process ion_molecules.csv for D2, H2, etc.
+                ion_timesteps = [timestep for timestep in timestep_data if any(atom['element'] == f'{ion}' for atom in timestep['atoms'])]
+
+                for timestep in ion_timesteps:
+                    ion_atoms = [atom for atom in timestep['atoms'] if atom['element'] == f'{ion}']
+
+                    for ion_atom1 in ion_atoms:
+
+                        for ion_atom2 in ion_atoms:
+
+                            if ion_atom1 != ion_atom2 and ion_atom1['id'] not in ids_ion:
+                                distance = calculate_distance(ion_atom1, ion_atom2)
+
+                                if ion_atom1['c_CMP_PE'] != 0 and ion_atom2['c_CMP_PE'] == ion_atom1['c_CMP_PE'] and distance <= 1:
+                                    ids_ion.append(ion_atom2['id'])
+                                    ion_rows.append([
+                                        file_name,
+                                        str(timestep['time']),
+                                        str(ion_atom1['id']),
+                                        str(ion_atom2['id']),
+                                        str(distance),
+                                        str(ion_atom1['c_CMP_PE']),
+                                        str(ion_atom2['c_CMP_PE']),
+                                        str(ion_atom1['c_CMP_KE']),
+                                        str(ion_atom2['c_CMP_KE']),
+                                        str(ion_atom1['x']),
+                                        str(ion_atom1['y']),
+                                        str(ion_atom1['z']),
+                                        str(ion_atom2['x']),
+                                        str(ion_atom2['y']),
+                                        str(ion_atom2['z']),
+                                        str(ion_atom1['vx']),
+                                        str(ion_atom1['vy']),
+                                        str(ion_atom1['vz']),
+                                        str(ion_atom2['vx']),
+                                        str(ion_atom2['vy']),
+                                        str(ion_atom2['vz'])
+                                    ])
+
+                # Process ion_single.csv
+                for timestep in ion_timesteps:
+
+                    for atom in timestep['atoms']:
+
+                        if atom['element'] == f'{ion}' and float(atom['c_CMP_PE']) == 0 and atom['id'] not in ids_ion:
+                            angle = escape_angle(atom['vx'], atom['vy'], atom['vz'])
+                            ids_ion.append(atom['id'])
+                            single_ion_rows.append([
+                                file_name,
+                                str(timestep['time']),
+                                str(atom['id']),
+                                str(atom['c_CMP_PE']),
+                                str(atom['c_CMP_KE']),
+                                str(angle),
+                                str(atom['vx']),
+                                str(atom['vy']),
+                                str(atom['vz'])
+                            ])
+
+    return target_rows, ion_rows, single_ion_rows
+
+""" Function to find the sputtered molecules and single ions leaving the surface """
 def generate_molecule_data(root_dir):
     # Output files for different cases
     output_molecule_target = os.path.join(root_dir, "Target_molecules.csv")
@@ -481,7 +633,7 @@ def generate_molecule_data(root_dir):
     output_single_ion = os.path.join(root_dir, "ion_single.csv")
 
     non_empty_files = []
-    for i in range(1, 12001):
+    for i in range(1, get_max_folder_number(root_dir) + 1):
         folder = os.path.join(root_dir, str(i))
         if not os.path.isdir(folder):
             continue
@@ -561,251 +713,27 @@ def generate_molecule_data(root_dir):
             "Vz"
         ])
 
-    # Number of cores to use for parallel processing
-    number_of_cores = 10
-
-    # Create a ProcessPoolExecutor
+    # Process each RID value in parallel - each worker parses one simulation folder and returns its rows
+    number_of_cores = os.cpu_count() or 1
     with ProcessPoolExecutor(max_workers=number_of_cores) as executor:
+        futures = [executor.submit(process_rid_dump_files, rid, root_dir) for rid in non_empty_files]
 
-        # Process each RID value
-        #for rid in range(1, len([item for item in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, item))])+1):
-        for rid in non_empty_files:
-            # Extract the numeric portion from the "rid" value
-            #rid_numeric = int(rid.split(".")[1])
-            rid_numeric = rid
-            ids_target = []
-            ids_ion    = []
+        with open(output_molecule_target, 'a', newline='') as target_file, \
+             open(output_molecule_ion, 'a', newline='') as ion_file, \
+             open(output_single_ion, 'a', newline='') as single_ion_file:
+            target_writer = csv.writer(target_file)
+            ion_writer = csv.writer(ion_file)
+            single_ion_writer = csv.writer(single_ion_file)
 
-            # Generate the folder path for the corresponding RID
-            folder_path = os.path.join(root_dir, str(rid_numeric))
+            for future in as_completed(futures):
+                target_rows, ion_rows, single_ion_rows = future.result()
+                if target_rows:
+                    target_writer.writerows(target_rows)
+                if ion_rows:
+                    ion_writer.writerows(ion_rows)
+                if single_ion_rows:
+                    single_ion_writer.writerows(single_ion_rows)
 
-            # Check if the folder exists
-            if os.path.exists(folder_path):
-                # Process each dump file in the folder
-                for file_name in os.listdir(folder_path):
-                    if file_name.endswith('.txt'):
-                        file_path = os.path.join(folder_path, file_name)
-
-                        # Read the dump file
-                        with open(file_path, 'r') as file:
-                            lines = file.readlines()
-
-                        # Initialize variables
-                        timestep_data = []
-                        current_timestep = {'timestep': None, 'time': None, 'atoms': []}
-                        headers = None  # Initialize headers outside the loop
-
-                        # Parse the dump file
-                        iterator = iter(lines)
-                        for line in iterator:
-                            if line.startswith("ITEM: TIMESTEP"):
-                                if current_timestep is not None:
-                                    timestep_data.append(current_timestep)
-                                #current_timestep = {'timestep': None, 'time': None, 'atoms': []}
-                                current_timestep['timestep'] = int(next(iterator, '').strip())  # Get the timestep from the next line
-                                
-                            elif line.startswith("ITEM: TIME"):
-                                current_timestep = {'timestep': None, 'time': None, 'atoms': []}
-                                try:
-                                    time_line = next(iterator, '')
-                                    if time_line is not None:
-                                        current_timestep['time'] = float(time_line.strip())  # Get the time from the next line
-                                    else:
-                                        current_timestep['time'] = None
-                                except ValueError:
-                                    current_timestep['time'] = None
-
-                            elif line.startswith("ITEM: ATOMS"):
-                                headers = line.split()[2:]
-                            elif headers is not None and not line.startswith("ITEM"):
-                                atom_data = line.split()
-
-                                # Ensure that the atom_data has the same length as headers
-                                if len(atom_data) == len(headers):
-                                    atom = {headers[i]: float(atom_data[i]) if i >= 3 and atom_data[i].replace('.', '').isdigit() else atom_data[i] for i in range(len(headers))}
-                                    current_timestep['atoms'].append(atom)
-
-                        # Append the last timestep
-                        #if current_timestep is not None:
-                        #    timestep_data.append(current_timestep)
-
-                        # Process Target_molecules.csv for target atoms
-                        target_timesteps = [timestep for timestep in timestep_data if any(atom['element'] == f'{target}' for atom in timestep['atoms'])]
-
-                        with open(output_molecule_target, 'a', newline='') as csv_file:
-                            csv_writer = csv.writer(csv_file)
-
-                            for timestep in target_timesteps:
-                                target_atoms = [atom for atom in timestep['atoms'] if atom['element'] == f'{target}']
-
-                                for target_atom in target_atoms:
-                                    ion_atoms = [a for a in timestep['atoms'] if a['element'] == f'{ion}']
-
-                                    if ion_atoms:
-                                        for ion_atom in ion_atoms:
-                                            distance = calculate_distance(target_atom, ion_atom)
-
-                                            if target_atom['c_CMP_PE'] != 0 and distance <= 2 and float(ion_atom['c_CMP_PE']) > -2:
-                                                ids_target.append(target_atom['id'])
-                                                ids_ion.append(ion_atom['id'])
-                                                csv_writer.writerow([
-                                                    file_name,
-                                                    str(timestep['timestep']),
-                                                    str(timestep['time']),
-                                                    str(target_atom['id']),
-                                                    str(ion_atom['id']),
-                                                    str(distance),
-                                                    str(target_atom['c_CMP_PE']),
-                                                    str(ion_atom['c_CMP_PE']),
-                                                    str(target_atom['c_CMP_KE']),
-                                                    str(ion_atom['c_CMP_KE']),
-                                                    str(target_atom['x']),
-                                                    str(target_atom['y']),
-                                                    str(target_atom['z']),
-                                                    str(ion_atom['x']),
-                                                    str(ion_atom['y']),
-                                                    str(ion_atom['z']),
-                                                    str(target_atom['vx']),
-                                                    str(target_atom['vy']),
-                                                    str(target_atom['vz']),
-                                                    str(ion_atom['vx']),
-                                                    str(ion_atom['vy']),
-                                                    str(ion_atom['vz'])
-                                                ])
-                                                
-                                            else:
-                                                for target_atom2 in target_atoms:
-
-                                                    if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
-                                                        distance = calculate_distance(target_atom, target_atom2)
-
-                                                        if target_atom['c_CMP_PE'] != 0 and distance <= 2:
-                                                            ids_target.append(target_atom['id'])
-                                                            csv_writer.writerow([
-                                                                file_name,
-                                                                str(timestep['timestep']),
-                                                                str(timestep['time']),
-                                                                str(target_atom['id']),
-                                                                str(target + ': ' + target_atom2['id']),
-                                                                str(distance),
-                                                                str(target_atom['c_CMP_PE']),
-                                                                str(target_atom2['c_CMP_PE']),
-                                                                str(target_atom['c_CMP_KE']),
-                                                                str(target_atom2['c_CMP_KE']),
-                                                                str(target_atom['x']),
-                                                                str(target_atom['y']),
-                                                                str(target_atom['z']),
-                                                                str(target_atom2['x']),
-                                                                str(target_atom2['y']),
-                                                                str(target_atom2['z']),
-                                                                str(target_atom['vx']),
-                                                                str(target_atom['vy']),
-                                                                str(target_atom['vz']),
-                                                                str(target_atom2['vx']),
-                                                                str(target_atom2['vy']),
-                                                                str(target_atom2['vz'])
-                                                            ])
-
-                                    else:
-                                        for target_atom2 in target_atoms:
-
-                                            if target_atom2 != target_atom and target_atom2['id'] not in ids_target:
-                                                distance = calculate_distance(target_atom, target_atom2)
-
-                                                if target_atom['c_CMP_PE'] != 0 and distance <= 3:
-                                                    ids_target.append(target_atom['id'])
-                                                    csv_writer.writerow([
-                                                        file_name,
-                                                        str(timestep['timestep']),
-                                                        str(timestep['time']),
-                                                        str(target_atom['id']),
-                                                        str(target + ': ' + target_atom2['id']),
-                                                        str(distance),
-                                                        str(target_atom['c_CMP_PE']),
-                                                        str(target_atom2['c_CMP_PE']),
-                                                        str(target_atom['c_CMP_KE']),
-                                                        str(target_atom2['c_CMP_KE']),
-                                                        str(target_atom['x']),
-                                                        str(target_atom['y']),
-                                                        str(target_atom['z']),
-                                                        str(target_atom2['x']),
-                                                        str(target_atom2['y']),
-                                                        str(target_atom2['z']),
-                                                        str(target_atom['vx']),
-                                                        str(target_atom['vy']),
-                                                        str(target_atom['vz']),
-                                                        str(target_atom2['vx']),
-                                                        str(target_atom2['vy']),
-                                                        str(target_atom2['vz'])
-                                                    ])
-
-                        # Process ion_molecules.csv for D2, H2, etc.
-                        ion_timesteps = [timestep for timestep in timestep_data if any(atom['element'] == f'{ion}' for atom in timestep['atoms'])]
-
-                        with open(output_molecule_ion, 'a', newline='') as csv_file:
-                            csv_writer = csv.writer(csv_file)
-
-                            for timestep in ion_timesteps:
-                                ion_atoms = [atom for atom in timestep['atoms'] if atom['element'] == f'{ion}']
-
-                                for ion_atom1 in ion_atoms:
-
-                                    for ion_atom2 in ion_atoms:
-
-                                        if ion_atom1 != ion_atom2 and ion_atom1['id'] not in ids_ion:
-                                            distance = calculate_distance(ion_atom1, ion_atom2)
-
-                                            if ion_atom1['c_CMP_PE'] != 0 and ion_atom2['c_CMP_PE'] == ion_atom1['c_CMP_PE'] and distance <= 1:
-                                                ids_ion.append(ion_atom2['id'])
-                                                csv_writer.writerow([
-                                                    file_name,
-                                                    str(timestep['time']),
-                                                    str(ion_atom1['id']),
-                                                    str(ion_atom2['id']),
-                                                    str(distance),
-                                                    str(ion_atom1['c_CMP_PE']),
-                                                    str(ion_atom2['c_CMP_PE']),
-                                                    str(ion_atom1['c_CMP_KE']),
-                                                    str(ion_atom2['c_CMP_KE']),
-                                                    str(ion_atom1['x']),
-                                                    str(ion_atom1['y']),
-                                                    str(ion_atom1['z']),
-                                                    str(ion_atom2['x']),
-                                                    str(ion_atom2['y']),
-                                                    str(ion_atom2['z']),
-                                                    str(ion_atom1['vx']),
-                                                    str(ion_atom1['vy']),
-                                                    str(ion_atom1['vz']),
-                                                    str(ion_atom2['vx']),
-                                                    str(ion_atom2['vy']),
-                                                    str(ion_atom2['vz'])
-                                                ])
-
-
-                        # Process ion_single.csv
-                        with open(output_single_ion, 'a', newline='') as csv_file:
-                            csv_writer = csv.writer(csv_file)
-
-                            for timestep in ion_timesteps:
-
-                                for atom in timestep['atoms']:
-
-                                    if atom['element'] == f'{ion}' and float(atom['c_CMP_PE']) == 0 and atom['id'] not in ids_ion:
-                                        angle = escape_angle(atom['vx'], atom['vy'], atom['vz'])
-                                        ids_ion.append(atom['id'])
-                                        csv_writer.writerow([
-                                            file_name,
-                                            str(timestep['time']),
-                                            str(atom['id']),
-                                            str(atom['c_CMP_PE']),
-                                            str(atom['c_CMP_KE']),
-                                            str(angle),
-                                            str(atom['vx']),
-                                            str(atom['vy']),
-                                            str(atom['vz'])
-                                        ])
-                            continue
-    
     # Load the generated Molecule.csv file into a DataFrame
     molecule_df = pd.read_csv(output_molecule_target)
 
@@ -844,12 +772,10 @@ def generate_molecule_data(root_dir):
         polyatomic_df.to_csv(polyatomic_output, index=False)
 
     # Apply the processing function to each group of Dump File and save the final DataFrame to CSV
-    modified_df_target = molecule_df.groupby('Dump File').apply(process_molecule_target_1).reset_index(drop=True)
-    final_df_target = modified_df_target.groupby('Dump File').apply(process_molecule_target_2).reset_index(drop=True)
+    modified_df_target = molecule_df.groupby('Dump File').apply(process_molecule_target_1, include_groups=False).reset_index(drop=True)
+    final_df_target = modified_df_target.groupby('Dump File').apply(process_molecule_target_2, include_groups=False).reset_index(drop=True)
     final_df_target.to_csv(output_molecule_target, index=False)
-    
-    # Read the modified CSV file into a DataFrame
-    df_target = pd.read_csv(output_molecule_target)
+    df_target = final_df_target
 
     # Filter rows where there are two or more rows for the same target atom ID in a dump file
     filtered_df_target = df_target.groupby(['Dump File', f'ID_{target}']).filter(lambda x: len(x) >= 2)
@@ -907,9 +833,6 @@ def generate_molecule_data(root_dir):
 
     # Calculate Velocity and generate Velocity.csv
 
-    # Read the center of mass CSV file
-    com_df_target = pd.read_csv(output_molecule_target)
-
     # Calculate velocity for each pair of rows with the same 'Dump File'
     velocity_data = []
     for dump_file, group in com_df_target.groupby('Dump File'):
@@ -937,11 +860,10 @@ def generate_molecule_data(root_dir):
     # Write the result to the output CSV file
     velocity_df_target.to_csv(output_molecule_target, index=False)
 
-    if os.path.exists(diatomic_output):
-        # Read the modified CSV file into a DataFrame
-        df_target = pd.read_csv(diatomic_output)
+    if diatomic_target:
+        df_target = diatomic_df
         target_data = []
-        for index, row in df_target.iterrows():
+        for row in df_target.to_dict('records'):
             dump_file = row['Dump File'].strip()  # Remove leading and trailing whitespaces
 
             # Calculate center of mass for the unique ID in that line
@@ -952,7 +874,7 @@ def generate_molecule_data(root_dir):
                 # Compute the total mass of the system
                 total_mass = mass_target * 2
 
-                KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz = kinetic_energy_analysis (row[f'X_{target}'], row[f'Y_{target}'], row[f'Z_{target}'], 
+                KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz, check = kinetic_energy_analysis(row[f'X_{target}'], row[f'Y_{target}'], row[f'Z_{target}'], 
                                                                                                                                 row[f'Vx_{target}'], row[f'Vy_{target}'], row[f'Vz_{target}'], 
                                                                                                                                 mass_target, row[f'KE {target}'], row[f'PE {target}'], 
                                                                                                                                 row[f'X_{ion}'], row[f'Y_{ion}'], row[f'Z_{ion}'], 
@@ -974,6 +896,7 @@ def generate_molecule_data(root_dir):
                                 KE_rot,
                                 KE_vib,
                                 E_vib,
+                                check,
                                 J,
                                 n,
                                 Vcom
@@ -982,7 +905,7 @@ def generate_molecule_data(root_dir):
             else:
                 total_mass = mass_target + mass_ion
 
-                KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz = kinetic_energy_analysis (row[f'X_{target}'], row[f'Y_{target}'], row[f'Z_{target}'], 
+                KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz, check = kinetic_energy_analysis(row[f'X_{target}'], row[f'Y_{target}'], row[f'Z_{target}'], 
                                                                                                                                 row[f'Vx_{target}'], row[f'Vy_{target}'], row[f'Vz_{target}'], 
                                                                                                                                 mass_target, row[f'KE {target}'], row[f'PE {target}'], 
                                                                                                                                 row[f'X_{ion}'], row[f'Y_{ion}'], row[f'Z_{ion}'], 
@@ -1004,6 +927,7 @@ def generate_molecule_data(root_dir):
                                 KE_rot,
                                 KE_vib,
                                 E_vib,
+                                check,
                                 J,
                                 n,
                                 Vcom
@@ -1020,6 +944,7 @@ def generate_molecule_data(root_dir):
                                                     'KE_rot',
                                                     'KE_vib',
                                                     'E_vib',
+                                                    'collinearity',
                                                     'Rot quantum #',
                                                     'Vib quantum #',
                                                     'Vcom'
@@ -1028,10 +953,10 @@ def generate_molecule_data(root_dir):
         # Write the result to the output CSV file
         com_df_target.to_csv(diatomic_output, index=False)
 
-        if r0_it != 0:
+        if r0_tt != 0 or r0_it != 0:
 
-            final_rovib_target =  os.path.join(root_dir, "final_rovib_target.csv")  # Replace with your desired output file path
-            rovib_target = pd.read_csv(diatomic_output)
+            final_rovib_target =  os.path.join(root_dir, "final_rovib_target.csv")
+            rovib_target = com_df_target
 
             # Columns to average
             columns_to_average = ["escape angle", "KE_tot", "KE_com", "KE_rot", "KE_vib", "E_vib", "Rot quantum #", "Vib quantum #", "Vcom"]
@@ -1056,7 +981,7 @@ def generate_molecule_data(root_dir):
     # Calculate center of mass for each unique combination of "Dump File" and f"ID_{ion}1"
     df_ion    = pd.read_csv(output_molecule_ion)
     ion_data = []
-    for index, row in df_ion.iterrows():
+    for row in df_ion.to_dict('records'):
         dump_file = row['Dump File'].strip()  # Remove leading and trailing whitespaces
 
         # Calculate center of mass for the unique ID in that line
@@ -1065,7 +990,7 @@ def generate_molecule_data(root_dir):
 
         total_mass = mass_ion * (len(ion_id1) + len(ion_id2))
 
-        KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz = kinetic_energy_analysis (row[f'X_{ion}1'], row[f'Y_{ion}1'], row[f'Z_{ion}1'], 
+        KE_tot, KE_com, KE_rot, KE_vib, E_vib, J, n, Vcom, Vcom_x, Vcom_y, Vcom_z, COMx, COMy, COMz, check = kinetic_energy_analysis(row[f'X_{ion}1'], row[f'Y_{ion}1'], row[f'Z_{ion}1'], 
                                                                                                                         row[f'Vx_{ion}1'], row[f'Vy_{ion}1'], row[f'Vz_{ion}1'], 
                                                                                                                         mass_ion, row[f'KE {ion}1'], row[f'PE {ion}1'], 
                                                                                                                         row[f'X_{ion}2'], row[f'Y_{ion}2'], row[f'Z_{ion}2'], 
@@ -1087,6 +1012,7 @@ def generate_molecule_data(root_dir):
                          KE_rot,
                          KE_vib,
                          E_vib,
+                         check,
                          J,
                          n,
                          Vcom
@@ -1103,6 +1029,7 @@ def generate_molecule_data(root_dir):
                                                  'KE_rot',
                                                  'KE_vib',
                                                  'E_vib',
+                                                 'collinearity',
                                                  'Rot quantum #',
                                                  'Vib quantum #',
                                                  'Vcom'
@@ -1114,13 +1041,13 @@ def generate_molecule_data(root_dir):
     if r0_ii != 0:
 
         final_rovib_ion =  os.path.join(root_dir, "final_rovib_ion.csv")
-        rovib_ion = pd.read_csv(output_molecule_ion)
+        rovib_ion = com_df_ion
 
         # Columns to average
         columns_to_average = ["escape angle", "KE_tot", "KE_com", "KE_rot", "KE_vib", "E_vib", "Rot quantum #", "Vib quantum #", "Vcom"]
 
         # Group by 'Dump File' and 'ID', and compute the mean for numeric columns
-        grouped_rovib = rovib_ion.groupby(['Dump File', 'ID_D'])
+        grouped_rovib = rovib_ion.groupby(['Dump File', f'ID_{ion}'])
 
         # Compute the mean for the rotational and vibrational quantum numbers
         averaged = grouped_rovib[columns_to_average].mean()
@@ -1173,7 +1100,6 @@ def sputtered_species(name, root_dir):
                         count = df[df['Molecule'] == value].shape[0]
                         results1.append({'Energy [eV]' : energy, 'Value': label, 'Count': count})
                 else:
-                    #print(f"\n{name}: 'Velocity.csv' not found.")
                     for value, label in values_to_count.items():
                         count = 0
                         results1.append({'Energy [eV]' : energy, 'Value': label, 'Count': count})
@@ -1184,7 +1110,6 @@ def sputtered_species(name, root_dir):
                         total_lines = len(lines)
                         results2.append({'Energy [eV]' : energy, 'Total Sputtered Species': total_lines})
                 else:
-                    #print(f"\n{name}: 'sputtered.data' not found.")
                     total_lines = 0
                     results2.append({'Energy [eV]' : energy, 'Total Sputtered Species': total_lines})
     
@@ -1200,8 +1125,9 @@ def sputtered_species(name, root_dir):
     pivot1_df = sums1_df.pivot(index='Energy [eV]', columns='Value', values='Count').reset_index()
     pivot2_df = pd.DataFrame(sums2_df['Total Sputtered Species'].values, index=sums2_df['Energy [eV]'], columns=['Total Sputtered Species']).reset_index()
     
-    # Calculate the 'target' column dynamically
-    pivot1_df[f'{target}'] = pivot2_df['Total Sputtered Species'] - pivot1_df[[f'{target}{ion}', f'{target}{ion}2', f'{target}{ion}3', f'{target}2', f'{target}2', f'{target}2{ion}', f'{target}2{ion}']].sum(axis=1)
+    # Calculate the 'target' column dynamically (subtract every tracked molecule category exactly once)
+    molecule_columns = list(values_to_count.values())
+    pivot1_df[f'{target}'] = pivot2_df['Total Sputtered Species'] - pivot1_df[molecule_columns].sum(axis=1)
     
     # Sort the DataFrame by 'Folder'
     pivot1_df['Energy [eV]'] = pd.Categorical(pivot1_df['Energy [eV]'], categories=energiez, ordered=True)
@@ -1350,4 +1276,74 @@ def main():
     print(f"\033[32m\nResults saved to {output_json}\033[0m")
 
 if __name__ == "__main__":
+    # Take target and ion as input, capitalize for consistency
+    target = input("Enter the target element symbol (e.g., 'B'): ").strip().capitalize()
+    ion = input("Enter the ion element symbol (e.g., 'W'): ").strip().capitalize()
+
+    # Retrieve atomic masses
+    try:
+        mass_target = getattr(periodictable, target).mass
+        mass_ion = getattr(periodictable, ion).mass
+        print(f"\n\033[32mMass of {target}: {mass_target} u\033[0m")
+        print(f"\033[32mMass of {ion}: {mass_ion} u\n\033[0m")
+    except AttributeError:
+        print("\033[31m\nOne or both element symbols are invalid. Please check your input. u\033[0m")
+        sys.exit(1)
+
+    ### Get vibrational data
+    key = (target, ion) if (target, ion) in vibrational_data else (ion, target)
+    data = vibrational_data.get(key, None)
+
+    if data:
+        # Swap the values dynamically if the key order is reversed
+        if key != (target, ion):
+            Nu_e_tt, r0_tt, D0_tt = data['Nu_e_ii'], data['r0_ii'], data['D0_ii']
+            Nu_e_it, r0_it, D0_it = data['Nu_e_it'], data['r0_it'], data['D0_it']
+            Nu_e_ii, r0_ii, D0_ii = data['Nu_e_tt'], data['r0_tt'], data['D0_tt']
+        else:
+            Nu_e_it, r0_it, D0_it = data['Nu_e_it'], data['r0_it'], data['D0_it']
+            Nu_e_tt, r0_tt, D0_tt = data['Nu_e_tt'], data['r0_tt'], data['D0_tt']
+            Nu_e_ii, r0_ii, D0_ii = data['Nu_e_ii'], data['r0_ii'], data['D0_ii']
+
+        print(f"\033[32mVibrational data for {ion}->{target}:\033[0m")
+        print(f"\033[32m  Nu_e_it = {Nu_e_it:.5e} Hz, r0_it = {r0_it:.5e}, D0_it = {D0_it:.5e} eV\033[0m")
+        print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.5e} Hz, r0_tt = {r0_tt:.5e}, D0_tt = {D0_tt:.5e} eV\033[0m")
+        print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.5e} Hz, r0_ii = {r0_ii:.5e}, D0_ii = {D0_ii:.5e} eV\033[0m")
+    else:
+        Nu_e_tt, r0_tt = 0, 0
+        Nu_e_it, r0_it = 0, 0
+        Nu_e_ii, r0_ii = 0, 0
+        print(f"\033[32mNo vibrational data found for {ion}->{target}:\033[0m")
+        print(f"\033[32m  Nu_e_it = {Nu_e_it:.1e} Hz, r0_it = {r0_it:.1e}\033[0m")
+        print(f"\033[32m  Nu_e_tt = {Nu_e_tt:.1e} Hz, r0_tt = {r0_tt:.1e}\033[0m")
+        print(f"\033[32m  Nu_e_ii = {Nu_e_ii:.1e} Hz, r0_ii = {r0_ii:.1e}\033[0m")
+
+    # Initialize an empty dictionary to store directories
+    dirs = {}
+
+    # Loop to allow user to input multiple directories
+    while True:
+        # Take directory name input
+        dir_name = input("\nEnter the directory name (e.g., '300K-0deg') or type 'done' to start: ").strip()
+        
+        # Break the loop if the user is done
+        if dir_name.lower() == 'done':
+            break
+        
+        # Take the corresponding path input
+        dir_path = input(f"\nEnter the path for {dir_name}: ").strip()
+        
+        # Store the directory in the dictionary
+        dirs[dir_name] = dir_path
+
+    # Print the directories to verify
+    print("\n\033[32mDirectories entered:\033[0m")
+    for dir_name, dir_path in dirs.items():
+        print(f"\033[32m{dir_name}: {dir_path}\033[0m")
+
+    print("\033[32m\nRunning...\033[0m")
+
+    # Creating the final json file for sputtering yield
+    output_json = f'sputtering_yields_{ion}{target}.json'
+
     main()
