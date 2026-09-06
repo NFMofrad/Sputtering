@@ -61,6 +61,7 @@ command line, one set per impact:
 | Variable | Source column in the `.tsv` |
 |---|---|
 | `T` | fixed per batch, e.g. `300` (must match the restart file's temperature) |
+| `x`, `y`, `z` | `x`, `y`, `z` |
 | `vx`, `vy`, `vz` | `vx`, `vy`, `vz` |
 | `shiftx`, `shifty` | `shift_x`, `shift_y` |
 | `i` | `run_id` (used to name `control.${i}.csv`) |
