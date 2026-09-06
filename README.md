@@ -8,5 +8,3 @@ This package contains input files and scripts necessary for running molecular dy
 2) Potential Files: Files containing interatomic potentials (e.g., Tersoff, EAM) used to model material interactions during sputtering events.
 
 3) Postprocessing Scripts: Python scripts for analyzing simulation output, calculating sputtering yields, tracking atom trajectories, and visualizing.
-
-4) Data Files: Example output data from MD simulations to demonstrate the postprocessing workflow.
