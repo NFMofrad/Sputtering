@@ -12,8 +12,8 @@ LAMMPS inputs/surface_gen/          LAMMPS inputs/irradiation/            postpr
 │                       │          │  + W1D1_open...restart│          │  from irradiation/    │
 │                       │          │  + elstop-DW.txt      │          │  run folders          │
 └───────────────────────┘          └───────────────────────┘          └───────────────────────┘
-   equilibrate slab,                  one process per ion impact,          yields, molecule ID,
-   deposit D, relax                   thousands of runs per (E, θ)         rovibrational analysis
+   equilibrate slab,               one process per ion impact,          yields, molecule ID,
+   deposit D, relax                thousands of runs per (E, θ)         rovibrational analysis
 ```
 
 ## 1. Build and equilibrate the surface
